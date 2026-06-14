@@ -1,0 +1,416 @@
+// Pharmacy Job Portal — Prisma schema (PostgreSQL / Neon)
+// Design rationale: docs/DATABASE.md
+// Full-text search (tsvector/GIN + pg_trgm) is applied via prisma/sql/fts.sql
+// (run by the seed script) — kept out of the schema to avoid Unsupported-type drift.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────── Enums ───────────────────────────
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum PostType {
+  JOB
+  NEWS
+  ARTICLE
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  GOVERNMENT
+  TEMPORARY
+}
+
+enum MediaType {
+  IMAGE
+  PDF
+  VIDEO
+  DOC
+}
+
+enum AdSlot {
+  HOMEPAGE_TOP
+  SIDEBAR
+  IN_CONTENT
+  BETWEEN_CONTENT
+  FOOTER
+  JOB_PAGE
+}
+
+enum AdType {
+  ADSENSE
+  BANNER_IMAGE
+  HTML
+}
+
+enum ProductType {
+  COURSE
+  PDF
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+}
+
+enum EventType {
+  PAGE_VIEW
+  POST_VIEW
+  SEARCH
+  AD_IMPRESSION
+  AD_CLICK
+  OUTBOUND_CLICK
+}
+
+// ─────────────────────────── Core ───────────────────────────
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         Role      @default(ADMIN)
+  avatarUrl    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  posts     Post[]
+  media     Media[]
+  auditLogs AuditLog[]
+}
+
+model Post {
+  id              String     @id @default(cuid())
+  type            PostType
+  title           String
+  slug            String     @unique
+  excerpt         String?
+  content         String     @db.Text
+  status          PostStatus @default(DRAFT)
+  isFeatured      Boolean    @default(false)
+  viewCount       Int        @default(0)
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  authorId        String
+  categoryId      String?
+  featuredImageId String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  author        User             @relation(fields: [authorId], references: [id])
+  category      Category?        @relation(fields: [categoryId], references: [id])
+  featuredImage Media?           @relation("PostFeaturedImage", fields: [featuredImageId], references: [id])
+  jobDetail     JobDetail?
+  seo           SeoMeta?
+  references    Reference[]
+  tags          PostTag[]
+  gallery       PostMedia[]
+  events        AnalyticsEvent[]
+
+  @@index([type, status, publishedAt])
+  @@index([status, publishedAt])
+  @@index([categoryId])
+}
+
+model JobDetail {
+  id              String    @id @default(cuid())
+  postId          String    @unique
+  companyName     String
+  companyWebsite  String?
+  city            String?
+  state           String?
+  jobType         JobType
+  salaryMin       Int?
+  salaryMax       Int?
+  salaryText      String?
+  currency        String    @default("INR")
+  applyUrl        String
+  experienceLevel String?
+  qualifications  String?
+  expiryDate      DateTime?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([state, city])
+  @@index([jobType])
+  @@index([expiryDate])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  posts    Post[]
+}
+
+model Tag {
+  id    String    @id @default(cuid())
+  name  String
+  slug  String    @unique
+  posts PostTag[]
+}
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model Reference {
+  id     String @id @default(cuid())
+  postId String
+  label  String
+  url    String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  type         MediaType
+  url          String
+  publicId     String    @unique
+  fileName     String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  alt          String?
+  uploadedById String?
+  createdAt    DateTime  @default(now())
+
+  uploadedBy       User?       @relation(fields: [uploadedById], references: [id])
+  postsFeatured    Post[]      @relation("PostFeaturedImage")
+  inGalleries      PostMedia[]
+  productDownloads Product[]   @relation("ProductDownloadFile")
+
+  @@index([type])
+}
+
+model PostMedia {
+  postId   String
+  mediaId  String
+  position Int    @default(0)
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([postId, mediaId])
+  @@index([mediaId])
+}
+
+model SeoMeta {
+  id              String   @id @default(cuid())
+  postId          String   @unique
+  metaTitle       String?
+  metaDescription String?
+  canonicalUrl    String?
+  ogTitle         String?
+  ogDescription   String?
+  ogImageUrl      String?
+  twitterCard     String   @default("summary_large_image")
+  jsonLdType      String?
+  keywords        String[]
+  noindex         Boolean  @default(false)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Advertisement {
+  id           String   @id @default(cuid())
+  name         String
+  slot         AdSlot
+  type         AdType
+  adsenseSlotId String?
+  imageUrl     String?
+  targetUrl    String?
+  htmlSnippet  String?
+  isActive     Boolean  @default(true)
+  startDate    DateTime?
+  endDate      DateTime?
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  events AnalyticsEvent[]
+
+  @@index([slot, isActive])
+}
+
+// ─────────────────── Future commerce (schema now, UI later) ───────────────────
+model Product {
+  id             String        @id @default(cuid())
+  type           ProductType
+  name           String
+  slug           String        @unique
+  description    String?
+  priceCents     Int           @default(0)
+  currency       String        @default("INR")
+  coverImageUrl  String?
+  demoVideoUrl   String?
+  downloadFileId String?
+  status         ProductStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  downloadFile Media?      @relation("ProductDownloadFile", fields: [downloadFileId], references: [id])
+  orderItems   OrderItem[]
+
+  @@index([type, status])
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  customerEmail String
+  customerName  String?
+  status        OrderStatus @default(PENDING)
+  totalCents    Int
+  currency      String      @default("INR")
+  createdAt     DateTime    @default(now())
+
+  items    OrderItem[]
+  payments Payment[]
+}
+
+model OrderItem {
+  id         String @id @default(cuid())
+  orderId    String
+  productId  String
+  priceCents Int
+  quantity   Int    @default(1)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  orderId           String
+  provider          PaymentProvider
+  providerOrderId   String?
+  providerPaymentId String?
+  amountCents       Int
+  currency          String          @default("INR")
+  status            String
+  rawPayload        Json?
+  createdAt         DateTime        @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+// ─────────────────────────── Cross-cutting ───────────────────────────
+model AnalyticsEvent {
+  id        String    @id @default(cuid())
+  type      EventType
+  path      String?
+  postId    String?
+  adId      String?
+  query     String?
+  referrer  String?
+  sessionId String?
+  country   String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  post Post?          @relation(fields: [postId], references: [id], onDelete: SetNull)
+  ad   Advertisement? @relation(fields: [adId], references: [id], onDelete: SetNull)
+
+  @@index([type, createdAt])
+  @@index([postId])
+  @@index([query])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+}

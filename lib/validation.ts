@@ -1,0 +1,151 @@
+import { z } from "zod";
+import {
+  PostType,
+  PostStatus,
+  JobType,
+  MediaType,
+  AdSlot,
+  AdType,
+} from "@prisma/client";
+
+// ─────────────────────────── Auth ───────────────────────────
+export const loginSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+export type LoginInput = z.infer<typeof loginSchema>;
+
+// ─────────────────────────── Shared ───────────────────────────
+const referenceSchema = z.object({
+  label: z.string().min(1).max(200),
+  url: z.string().url(),
+});
+
+const seoSchema = z.object({
+  metaTitle: z.string().max(70).optional().or(z.literal("")),
+  metaDescription: z.string().max(180).optional().or(z.literal("")),
+  canonicalUrl: z.string().url().optional().or(z.literal("")),
+  ogTitle: z.string().max(120).optional().or(z.literal("")),
+  ogDescription: z.string().max(200).optional().or(z.literal("")),
+  ogImageUrl: z.string().url().optional().or(z.literal("")),
+  keywords: z.array(z.string()).default([]),
+  noindex: z.boolean().default(false),
+});
+
+const jobDetailSchema = z.object({
+  companyName: z.string().min(1, "Company name is required").max(200),
+  companyWebsite: z.string().url().optional().or(z.literal("")),
+  city: z.string().max(120).optional().or(z.literal("")),
+  state: z.string().max(120).optional().or(z.literal("")),
+  jobType: z.nativeEnum(JobType),
+  salaryMin: z.coerce.number().int().nonnegative().optional(),
+  salaryMax: z.coerce.number().int().nonnegative().optional(),
+  salaryText: z.string().max(120).optional().or(z.literal("")),
+  applyUrl: z.string().url("Application link must be a valid URL"),
+  experienceLevel: z.string().max(120).optional().or(z.literal("")),
+  qualifications: z.string().max(500).optional().or(z.literal("")),
+  expiryDate: z.coerce.date().optional(),
+});
+
+// ─────────────────────────── Posts ───────────────────────────
+export const postSchema = z
+  .object({
+    type: z.nativeEnum(PostType),
+    title: z.string().min(3, "Title is too short").max(200),
+    slug: z
+      .string()
+      .regex(/^[a-z0-9-]*$/, "Slug may only contain lowercase letters, numbers and hyphens")
+      .optional()
+      .or(z.literal("")),
+    excerpt: z.string().max(300).optional().or(z.literal("")),
+    content: z.string().min(1, "Content is required"),
+    status: z.nativeEnum(PostStatus).default(PostStatus.DRAFT),
+    isFeatured: z.boolean().default(false),
+    categoryId: z.string().cuid().optional().or(z.literal("")),
+    featuredImageId: z.string().cuid().optional().or(z.literal("")),
+    scheduledAt: z.coerce.date().optional(),
+    tags: z.array(z.string().min(1).max(50)).max(20).default([]),
+    references: z.array(referenceSchema).max(30).default([]),
+    seo: seoSchema.optional(),
+    jobDetail: jobDetailSchema.optional(),
+  })
+  .refine((d) => d.type !== PostType.JOB || !!d.jobDetail, {
+    message: "Job posts require job details",
+    path: ["jobDetail"],
+  })
+  .refine(
+    (d) =>
+      !d.jobDetail ||
+      d.jobDetail.salaryMin == null ||
+      d.jobDetail.salaryMax == null ||
+      d.jobDetail.salaryMax >= d.jobDetail.salaryMin,
+    { message: "Maximum salary must be greater than minimum", path: ["jobDetail", "salaryMax"] },
+  );
+export type PostInput = z.infer<typeof postSchema>;
+
+// ─────────────────────────── Taxonomy ───────────────────────────
+export const categorySchema = z.object({
+  name: z.string().min(2).max(100),
+  slug: z.string().regex(/^[a-z0-9-]*$/).optional().or(z.literal("")),
+  description: z.string().max(300).optional().or(z.literal("")),
+  parentId: z.string().cuid().optional().or(z.literal("")),
+});
+export type CategoryInput = z.infer<typeof categorySchema>;
+
+export const tagSchema = z.object({
+  name: z.string().min(1).max(50),
+});
+export type TagInput = z.infer<typeof tagSchema>;
+
+// ─────────────────────────── Ads ───────────────────────────
+export const adSchema = z.object({
+  name: z.string().min(2).max(120),
+  slot: z.nativeEnum(AdSlot),
+  type: z.nativeEnum(AdType),
+  adsenseSlotId: z.string().max(50).optional().or(z.literal("")),
+  imageUrl: z.string().url().optional().or(z.literal("")),
+  targetUrl: z.string().url().optional().or(z.literal("")),
+  htmlSnippet: z.string().max(5000).optional().or(z.literal("")),
+  isActive: z.boolean().default(true),
+});
+export type AdInput = z.infer<typeof adSchema>;
+
+// ─────────────────────────── Media ───────────────────────────
+export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
+export const ALLOWED_DOC_TYPES = ["application/pdf"];
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+export const MAX_PDF_BYTES = 15 * 1024 * 1024; // 15MB
+
+export const mediaTypeFor = (mime: string): MediaType => {
+  if (ALLOWED_IMAGE_TYPES.includes(mime)) return MediaType.IMAGE;
+  if (mime === "application/pdf") return MediaType.PDF;
+  if (mime.startsWith("video/")) return MediaType.VIDEO;
+  return MediaType.DOC;
+};
+
+// ─────────────────────────── Public forms ───────────────────────────
+export const contactSchema = z.object({
+  name: z.string().min(2, "Please enter your name").max(120),
+  email: z.string().email("Enter a valid email"),
+  subject: z.string().max(160).optional().or(z.literal("")),
+  message: z.string().min(10, "Message is too short").max(4000),
+  // Honeypot — must be empty (bots fill it).
+  website: z.string().max(0).optional(),
+});
+export type ContactInput = z.infer<typeof contactSchema>;
+
+export const newsletterSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+});
+
+// ─────────────────────────── Search ───────────────────────────
+export const searchSchema = z.object({
+  q: z.string().trim().max(120).optional().default(""),
+  type: z.nativeEnum(PostType).optional(),
+  state: z.string().max(120).optional(),
+  city: z.string().max(120).optional(),
+  category: z.string().max(120).optional(),
+  jobType: z.nativeEnum(JobType).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+});
+export type SearchInput = z.infer<typeof searchSchema>;
