@@ -89,6 +89,17 @@ export async function getLatest(type: PostType, limit = 6) {
   });
 }
 
+/** Published slugs of a type — for generateStaticParams (ISR prerender). */
+export async function getPublishedSlugs(type: PostType, limit = 2000): Promise<string[]> {
+  const rows = await prisma.post.findMany({
+    where: { ...visibleWhere(), type },
+    select: { slug: true },
+    orderBy: { publishedAt: "desc" },
+    take: limit,
+  });
+  return rows.map((r) => r.slug);
+}
+
 export async function getPublishedPostBySlug(slug: string): Promise<PostDetail | null> {
   const post = await prisma.post.findUnique({ where: { slug }, include: postDetailInclude });
   if (!post || post.deletedAt) return null;

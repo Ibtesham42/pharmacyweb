@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { EventType } from "@prisma/client";
 import { recordEvent } from "@/services/analytics";
+import { incrementViewCount } from "@/services/posts";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 const eventSchema = z.object({
@@ -27,5 +28,11 @@ export async function POST(req: NextRequest) {
     ...parsed.data,
     userAgent: req.headers.get("user-agent") ?? undefined,
   });
+
+  // Off-render view counting for ISR-cached detail pages.
+  if (parsed.data.type === "POST_VIEW" && parsed.data.postId) {
+    void incrementViewCount(parsed.data.postId);
+  }
+
   return NextResponse.json({ ok: true });
 }

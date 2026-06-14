@@ -1,12 +1,15 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Building2, MapPin, Briefcase, GraduationCap, CalendarClock, Globe } from "lucide-react";
-import { getPublishedPostBySlug, getRelated, incrementViewCount } from "@/services/posts";
+import { getPublishedPostBySlug, getRelated, getPublishedSlugs } from "@/services/posts";
+import { safe } from "@/lib/utils";
 import { Markdown } from "@/components/markdown";
 import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { ApplyButton } from "@/components/public/apply-button";
 import { ShareButtons } from "@/components/public/share-buttons";
+import { ViewBeacon } from "@/components/public/view-beacon";
 import { PostCard } from "@/components/public/post-card";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { Badge } from "@/components/ui/badge";
@@ -15,13 +18,23 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { buildMetadata, jobPostingJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import { formatSalary, jobLocation, JOB_TYPE_LABELS, formatDate } from "@/lib/format";
 
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const slugs = await safe(getPublishedSlugs("JOB"), []);
+  return slugs.map((slug) => ({ slug }));
+}
+
+// Dedupe the fetch between generateMetadata and the page within one render.
+const getJob = cache((slug: string) => getPublishedPostBySlug(slug));
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPublishedPostBySlug(slug);
+  const post = await getJob(slug);
   if (!post || post.type !== "JOB") return { title: "Job not found" };
   return buildMetadata({
     title: post.seo?.metaTitle || post.title,
@@ -38,10 +51,9 @@ export async function generateMetadata({
 
 export default async function JobDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getPublishedPostBySlug(slug);
+  const post = await getJob(slug);
   if (!post || post.type !== "JOB" || !post.jobDetail) notFound();
 
-  void incrementViewCount(post.id);
   const related = await getRelated(post, 3);
   const j = post.jobDetail;
 
@@ -53,6 +65,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
 
   return (
     <div className="container py-8">
+      <ViewBeacon postId={post.id} />
       <JsonLd
         data={[
           jobPostingJsonLd({

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { adSchema } from "@/lib/validation";
 import { createAd, updateAd, deleteAd } from "@/services/ads";
 import { requireAdmin } from "@/lib/session";
@@ -11,6 +11,7 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : "Failed");
 
 function revalidate() {
   revalidatePath("/admin/ads");
+  revalidateTag("ads");
   revalidatePath("/", "layout");
 }
 
