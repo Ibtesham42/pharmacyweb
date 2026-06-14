@@ -13,6 +13,7 @@ import {
   Megaphone,
   Mail,
   Settings,
+  UserCog,
   LogOut,
   ExternalLink,
   Menu,
@@ -32,6 +33,7 @@ const NAV = [
   { href: "/admin/ads", label: "Advertisements", icon: Megaphone },
   { href: "/admin/messages", label: "Messages", icon: Mail },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin/account", label: "Account", icon: UserCog },
 ];
 
 export function AdminShell({

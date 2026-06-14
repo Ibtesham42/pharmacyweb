@@ -15,6 +15,24 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const profileSchema = z.object({
+  name: z.string().min(2, "Name is too short").max(120),
+  email: z.string().email("Enter a valid email"),
+});
+export type ProfileInput = z.infer<typeof profileSchema>;
+
+export const passwordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
+
 // ─────────────────────────── Shared ───────────────────────────
 const referenceSchema = z.object({
   label: z.string().min(1).max(200),
