@@ -1,5 +1,7 @@
 # PharmaCareers — Pharmacy Job Portal & Medical Content Platform
 
+[![CI](https://github.com/Ibtesham42/pharmacyweb/actions/workflows/ci.yml/badge.svg)](https://github.com/Ibtesham42/pharmacyweb/actions/workflows/ci.yml)
+
 Mobile-first, SEO-first platform for **pharmacy & medical jobs**, **medical news/articles**, and (future) **courses & paid PDFs**. India-focused. Single admin publishes content via a Blogger/WordPress-style editor.
 
 ## Tech stack
