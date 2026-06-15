@@ -123,6 +123,11 @@ export function DonationSettingsForm({
                 <Image src={s.qrImageUrl} alt="QR" width={56} height={56} className="rounded border" unoptimized />
               )}
             </div>
+            <Input
+              value={s.qrImageUrl}
+              onChange={(e) => set("qrImageUrl", e.target.value)}
+              placeholder="…or paste a QR image URL"
+            />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
