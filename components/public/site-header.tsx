@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Search, Pill, ChevronDown } from "lucide-react";
+import { Menu, X, Search, Pill, ChevronDown, Sparkles, Bot, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site";
 import { SearchBar } from "@/components/public/search-bar";
@@ -18,25 +18,91 @@ import {
 
 export type HeaderCategory = { id: string; name: string; slug: string };
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon?: LucideIcon;
+  highlight?: boolean;
+  title?: string;
+};
+
+const NAV: NavItem[] = [
   { href: "/jobs", label: "Jobs" },
   { href: "/articles", label: "Articles" },
   { href: "/news", label: "News" },
-  { href: "/ai", label: "AI Assistant" },
-  { href: "/copilot", label: "Career Copilot" },
+  {
+    href: "/ai",
+    label: "AI Assistant",
+    icon: Sparkles,
+    highlight: true,
+    title: "Ask AI about pharmacy, medicines, careers & jobs",
+  },
+  {
+    href: "/copilot",
+    label: "Career Copilot",
+    icon: Bot,
+    highlight: true,
+    title: "Resume analysis, job match, interview prep, study & learning",
+  },
 ];
 
-const NAV_AFTER = [{ href: "/about", label: "About" }];
+const NAV_AFTER: NavItem[] = [{ href: "/about", label: "About" }];
 
 export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  const linkCls = (href: string) =>
+  const desktopCls = (active: boolean, highlight?: boolean) =>
     cn(
-      "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-      pathname.startsWith(href) && "text-primary",
+      "inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+      highlight
+        ? active
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : "text-primary ring-1 ring-inset ring-primary/30 hover:bg-primary hover:text-primary-foreground"
+        : active
+          ? "text-primary hover:bg-accent hover:text-accent-foreground"
+          : "hover:bg-accent hover:text-accent-foreground",
     );
+
+  const renderDesktop = (item: NavItem) => {
+    const active = pathname.startsWith(item.href);
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        title={item.title}
+        aria-current={active ? "page" : undefined}
+        className={desktopCls(active, item.highlight)}
+      >
+        {Icon && <Icon className="h-4 w-4" />}
+        {item.label}
+      </Link>
+    );
+  };
+
+  const renderMobile = (item: NavItem) => {
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => setOpen(false)}
+        className={cn(
+          "flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium",
+          item.highlight ? "bg-primary/5 text-primary hover:bg-primary/10" : "hover:bg-accent",
+        )}
+      >
+        {Icon && <Icon className="h-4 w-4" />}
+        {item.label}
+        {item.highlight && (
+          <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            AI
+          </span>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -49,11 +115,7 @@ export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] 
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className={linkCls(item.href)}>
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map(renderDesktop)}
 
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -79,11 +141,7 @@ export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] 
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {NAV_AFTER.map((item) => (
-            <Link key={item.href} href={item.href} className={linkCls(item.href)}>
-              {item.label}
-            </Link>
-          ))}
+          {NAV_AFTER.map(renderDesktop)}
         </nav>
 
         <SearchBar compact className="hidden w-64 lg:block" placeholder="Search…" />
@@ -117,16 +175,7 @@ export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] 
       {open && (
         <nav className="border-t md:hidden" aria-label="Mobile">
           <div className="container flex flex-col py-2">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-3 text-base font-medium hover:bg-accent"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {NAV.map(renderMobile)}
             <Link
               href="/categories"
               onClick={() => setOpen(false)}
@@ -148,16 +197,7 @@ export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] 
                 ))}
               </div>
             )}
-            {NAV_AFTER.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-3 text-base font-medium hover:bg-accent"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {NAV_AFTER.map(renderMobile)}
           </div>
         </nav>
       )}
