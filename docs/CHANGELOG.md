@@ -12,6 +12,7 @@ All notable changes to this project are documented here (format: [Keep a Changel
 - **Telegram** share option (alongside WhatsApp, copy link, and native share).
 - **Desktop header**: inline search bar + Categories dropdown; categories also listed in the mobile menu.
 - **`ads.txt`** route for Google AdSense (publisher id derived from `NEXT_PUBLIC_ADSENSE_CLIENT`).
+- Site-wide AdSense loader script on all public pages (for Google site review/approval + Auto ads); per-unit components now render only the `<ins>` to avoid a duplicate loader.
 
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.

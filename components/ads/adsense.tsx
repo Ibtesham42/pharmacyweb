@@ -1,6 +1,5 @@
 "use client";
 
-import Script from "next/script";
 import { useEffect, useRef } from "react";
 
 declare global {
@@ -9,7 +8,11 @@ declare global {
   }
 }
 
-/** A single AdSense unit. Reserves height to avoid layout shift (CLS). */
+/**
+ * A single AdSense unit. The loader script is included site-wide in the public
+ * layout, so here we only render the <ins> and queue a render. Reserves height
+ * to avoid layout shift (CLS).
+ */
 export function AdSenseUnit({ slotId }: { slotId: string }) {
   const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT as string;
   const pushed = useRef(false);
@@ -26,22 +29,13 @@ export function AdSenseUnit({ slotId }: { slotId: string }) {
   }, []);
 
   return (
-    <>
-      <Script
-        id="adsbygoogle-init"
-        async
-        strategy="afterInteractive"
-        crossOrigin="anonymous"
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`}
-      />
-      <ins
-        className="adsbygoogle"
-        style={{ display: "block", minHeight: 90 }}
-        data-ad-client={client}
-        data-ad-slot={slotId}
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-      />
-    </>
+    <ins
+      className="adsbygoogle"
+      style={{ display: "block", minHeight: 90 }}
+      data-ad-client={client}
+      data-ad-slot={slotId}
+      data-ad-format="auto"
+      data-full-width-responsive="true"
+    />
   );
 }

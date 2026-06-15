@@ -1,3 +1,4 @@
+import Script from "next/script";
 import { SiteHeader } from "@/components/public/site-header";
 import { SiteFooter } from "@/components/public/site-footer";
 import { PageViewTracker } from "@/components/public/page-view-tracker";
@@ -7,12 +8,26 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { listPublicCategories } from "@/services/categories";
 import { safe } from "@/lib/utils";
 
+// Site-wide AdSense loader on all public pages (required for Google's site
+// review/approval and Auto ads). Individual units only render <ins> + push.
+const adsenseEnabled = process.env.NEXT_PUBLIC_ADSENSE_ENABLED === "true";
+const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const categories = await safe(listPublicCategories(), []);
   const navCategories = categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
 
   return (
     <>
+      {adsenseEnabled && adsenseClient && (
+        <Script
+          id="adsbygoogle-loader"
+          async
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
+        />
+      )}
       <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
       <SiteHeader categories={navCategories} />
       <main className="min-h-[60vh]">{children}</main>
