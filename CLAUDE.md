@@ -67,4 +67,4 @@ Copy `.env.example` → `.env`. Never commit secrets. Required: `DATABASE_URL`, 
 6. Run `npm run typecheck && npm run lint && npm run build` before declaring a phase done.
 
 ---
-_Last updated: 2026-06-15 — AI module (Phase 2): Groq chat + multimodal understanding + **Pharmacy Career Copilot** (résumé/job-match/interview/study/learning) + Admin AI Settings (see `docs/AI.md`), on top of the UX pass and Phase 11 MVP. Commerce deferred._
+_Last updated: 2026-06-15 — AI module (Phase 2): Groq chat + multimodal understanding + **Pharmacy Career Copilot** (resume/job-match/interview/study/learning) + Admin AI Settings (see `docs/AI.md`), on top of the UX pass and Phase 11 MVP. Commerce deferred._

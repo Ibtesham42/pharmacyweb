@@ -12,7 +12,7 @@ export const metadata = buildMetadata({
   title: "Pharmacy Career Copilot",
   path: "/copilot",
   description:
-    "AI career copilot for pharmacy & healthcare: chat, résumé analysis, job matching, interview prep, study help, and a personalized learning plan. Educational guidance only.",
+    "AI career copilot for pharmacy & healthcare: chat, resume analysis, job matching, interview prep, study help, and a personalized learning plan. Educational guidance only.",
 });
 
 export default async function CopilotPage() {
@@ -27,7 +27,7 @@ export default async function CopilotPage() {
       <Breadcrumbs items={[{ name: "Home", path: "/" }, { name: "Career Copilot", path: "/copilot" }]} />
       <h1 className="mt-4 text-2xl font-bold tracking-tight">Pharmacy Career Copilot</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Chat, résumé analysis, job matching, interview prep, study help, and a personalized learning
+        Chat, resume analysis, job matching, interview prep, study help, and a personalized learning
         plan — in one place.
       </p>
       <div className="mt-4">

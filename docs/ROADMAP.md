@@ -17,7 +17,7 @@ _Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · �
 | 9 Testing | Unit tests (Vitest, 17 passing); build/typecheck/lint green. E2E (Playwright) scaffolded for later. | ☑ |
 | 10 Deployment | `vercel-build` runs migrations; CI workflow; README + deployment_skill runbook. Needs Neon+Cloudinary provisioning to go live. | ◐ |
 | 11 Documentation | CLAUDE.md ×5, SRS/ARCHITECTURE/DATABASE/ROADMAP/PROGRESS/CHANGELOG. | ☑ |
-| 12 AI (Phase 2) | Groq chat (streaming) + **multimodal image/document understanding** + **Career Copilot** (résumé analysis, job match, interview prep, study, learning recs) + Admin AI Settings + safety + usage analytics; RAG/article-assistant/semantic-search designed (`docs/AI.md`). | ◐ |
+| 12 AI (Phase 2) | Groq chat (streaming) + **multimodal image/document understanding** + **Career Copilot** (resume analysis, job match, interview prep, study, learning recs) + Admin AI Settings + safety + usage analytics; RAG/article-assistant/semantic-search designed (`docs/AI.md`). | ◐ |
 
 ### Remaining to go live (requires accounts/secrets)
 1. Provision Neon Postgres; set `DATABASE_URL` + `DIRECT_URL`.
@@ -30,5 +30,5 @@ _Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · �
 ## Future milestones (post-MVP, separate approvals)
 - Commerce: courses marketplace, paid-PDF store, checkout (Razorpay), orders/payments UI.
 - Newsletter + sponsorships; featured/sponsored job listings; affiliate.
-- AI modules: **shipped** — Groq chat, multimodal understanding, and the Career Copilot (résumé/job-match/interview/study/learning); see `docs/AI.md`. Next: RAG knowledge base (pgvector), AI article assistant (admin), AI semantic search, multilingual, voice.
+- AI modules: **shipped** — Groq chat, multimodal understanding, and the Career Copilot (resume/job-match/interview/study/learning); see `docs/AI.md`. Next: RAG knowledge base (pgvector), AI article assistant (admin), AI semantic search, multilingual, voice.
 - Scaling: Redis cache, queue/worker, analytics rollups, read replicas.

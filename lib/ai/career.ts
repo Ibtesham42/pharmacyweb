@@ -8,7 +8,7 @@ Rules:
 - Use the Indian context (B.Pharm / D.Pharm / M.Pharm, GPAT, state pharmacy council registration, INR salaries, roles like pharmacist, medical representative, hospital/clinical pharmacist).
 - Be concise and structured.`;
 
-// ── Résumé analysis ──
+// ── Resume analysis ──
 export const resumeResultSchema = z.object({
   score: z.number().min(0).max(100),
   summary: z.string(),
@@ -22,10 +22,10 @@ export type ResumeResult = z.infer<typeof resumeResultSchema>;
 export function resumePrompt(resumeText: string): string {
   return `${CAREER_BASE}
 
-Analyze this résumé for pharmacy/healthcare roles. Provide an honest ATS-style score (0-100), a short
+Analyze this resume for pharmacy/healthcare roles. Provide an honest ATS-style score (0-100), a short
 summary, concrete strengths, missing skills/keywords, specific improvements, and ATS formatting tips.
 
-Résumé:
+Resume:
 """
 ${resumeText}
 """`;
@@ -65,11 +65,11 @@ export function jobMatchPrompt(resumeText: string, jobs: JobContext[]): string {
     .join("\n");
   return `${CAREER_BASE}
 
-Compare the résumé to these job listings. Return the best matches only (skip poor fits), each with a
+Compare the resume to these job listings. Return the best matches only (skip poor fits), each with a
 realistic matchPercent (0-100), the candidate's missing skills for it, and a one-line reason. You MUST
 use the exact slug provided for each job — do not invent slugs.
 
-Résumé:
+Resume:
 """
 ${resumeText}
 """
@@ -117,7 +117,7 @@ export function recommendPrompt(
   const list = posts.map((p) => `- slug=${p.slug} | ${p.title}`).join("\n");
   return `${CAREER_BASE}
 
-The user's goal: "${goal}".${resumeText ? `\nRésumé (for context):\n"""\n${resumeText.slice(0, 8000)}\n"""` : ""}
+The user's goal: "${goal}".${resumeText ? `\nResume (for context):\n"""\n${resumeText.slice(0, 8000)}\n"""` : ""}
 
 Recommend a personalized learning path: key focus areas, specific topics (each with a short "why"),
 and pick the most relevant of the site's articles below (use the exact slug). Only recommend articles

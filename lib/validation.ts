@@ -219,7 +219,7 @@ export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;
 // Career Copilot tool inputs
 export const aiResumeSchema = z.object({
   clientId: z.string().min(8).max(64),
-  resumeText: z.string().min(50, "Please provide more résumé text").max(200_000),
+  resumeText: z.string().min(50, "Please provide more resume text").max(200_000),
 });
 
 export const aiInterviewSchema = z.object({

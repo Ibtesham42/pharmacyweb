@@ -135,7 +135,7 @@ export function CareerCopilot({
       if (!res.ok || !data.text) throw new Error(data.error || "Could not read the file.");
       setResumeText(data.text);
       setResumeName(data.name || file.name);
-      toast.success("Résumé loaded");
+      toast.success("Resume loaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not read the file.");
     } finally {
@@ -146,7 +146,7 @@ export function CareerCopilot({
   const hasResume = resumeText.trim().length >= 50;
 
   async function runResume() {
-    if (!hasResume) return toast.error("Add your résumé first (upload or paste).");
+    if (!hasResume) return toast.error("Add your resume first (upload or paste).");
     setResume({ loading: true });
     try {
       setResume({ loading: false, result: await callTool<ResumeResult>("/api/ai/career/resume", { clientId, resumeText }) });
@@ -157,7 +157,7 @@ export function CareerCopilot({
   }
 
   async function runJobs() {
-    if (!hasResume) return toast.error("Add your résumé first (Résumé tab).");
+    if (!hasResume) return toast.error("Add your resume first (Resume tab).");
     setJobs({ loading: true });
     try {
       setJobs({ loading: false, result: await callTool<JobMatchResult>("/api/ai/career/job-match", { clientId, resumeText }) });
@@ -205,7 +205,7 @@ export function CareerCopilot({
 
   const tabs: { value: string; label: string }[] = [
     { value: "chat", label: "Chat" },
-    ...(careerEnabled ? [{ value: "resume", label: "Résumé" }] : []),
+    ...(careerEnabled ? [{ value: "resume", label: "Resume" }] : []),
     ...(careerEnabled ? [{ value: "jobs", label: "Job Match" }] : []),
     ...(careerEnabled ? [{ value: "interview", label: "Interview" }] : []),
     { value: "study", label: "Study" },
@@ -261,7 +261,7 @@ export function CareerCopilot({
 
       {careerEnabled && (
         <>
-          {/* Résumé */}
+          {/* Resume */}
           <TabsContent value="resume">
             <Card>
               <CardContent className="space-y-4 p-4">
@@ -288,12 +288,12 @@ export function CareerCopilot({
                 />
                 <Button onClick={runResume} disabled={resume.loading || !hasResume}>
                   {resume.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Analyze résumé
+                  Analyze resume
                 </Button>
                 <ResultPanel result={resume.result}>
                   {(r: ResumeResult) => (
                     <div className="space-y-4">
-                      <ScoreBar value={r.score} label="Résumé score" />
+                      <ScoreBar value={r.score} label="Resume score" />
                       {r.summary && <p className="text-sm text-muted-foreground">{r.summary}</p>}
                       <Bullets title="Strengths" items={r.strengths} />
                       <div>
@@ -505,18 +505,18 @@ function ResumeInput({
         {resumeName && (
           <span className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs">
             <FileText className="h-3.5 w-3.5" /> {resumeName}
-            <button type="button" onClick={onClear} aria-label="Remove résumé">
+            <button type="button" onClick={onClear} aria-label="Remove resume">
               <X className="h-3 w-3" />
             </button>
           </span>
         )}
       </div>
-      <p className="text-xs text-muted-foreground">…or paste your résumé text:</p>
+      <p className="text-xs text-muted-foreground">…or paste your resume text:</p>
       <Textarea
         value={resumeText}
         onChange={(e) => onText(e.target.value)}
         rows={6}
-        placeholder="Paste your résumé here…"
+        placeholder="Paste your resume here…"
       />
     </div>
   );
@@ -535,12 +535,12 @@ function ResumeBadge({
     <p className="text-sm text-muted-foreground">
       {hasResume ? (
         <span className="flex items-center gap-1.5">
-          <FileText className="h-4 w-4" /> Using your résumé{resumeName ? `: ${resumeName}` : ""}
+          <FileText className="h-4 w-4" /> Using your resume{resumeName ? `: ${resumeName}` : ""}
         </span>
       ) : optional ? (
-        "Tip: add your résumé in the Résumé tab for more personalized results."
+        "Tip: add your resume in the Resume tab for more personalized results."
       ) : (
-        "Add your résumé in the Résumé tab first (upload or paste)."
+        "Add your resume in the Resume tab first (upload or paste)."
       )}
     </p>
   );

@@ -135,7 +135,7 @@ export function AiSettingsForm({
               onCheckedChange={(v) => set("documentAnalysisEnabled", v)}
             />
           </Row>
-          <Row label="Career Copilot tools" hint="Résumé analysis, job match, interview prep, learning recs.">
+          <Row label="Career Copilot tools" hint="Resume analysis, job match, interview prep, learning recs.">
             <Switch
               checked={s.careerToolsEnabled}
               onCheckedChange={(v) => set("careerToolsEnabled", v)}

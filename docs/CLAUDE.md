@@ -28,4 +28,4 @@ Living documentation. Keep these in sync — they are part of "definition of don
 - [ ] All CLAUDE.md "Last updated" lines bumped.
 
 ---
-_Last updated: 2026-06-15 — docs synced after the Pharmacy Career Copilot (résumé/job-match/interview/study/learning)._
+_Last updated: 2026-06-15 — docs synced after the Pharmacy Career Copilot (resume/job-match/interview/study/learning)._
