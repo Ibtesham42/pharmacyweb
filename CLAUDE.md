@@ -67,4 +67,4 @@ Copy `.env.example` → `.env`. Never commit secrets. Required: `DATABASE_URL`, 
 6. Run `npm run typecheck && npm run lint && npm run build` before declaring a phase done.
 
 ---
-_Last updated: Phase 11 — MVP code-complete (jobs, content, search, admin, SEO, ads). Pending: provision Neon + Cloudinary to deploy. Commerce/AI deferred._
+_Last updated: 2026-06-15 — UX/accessibility pass (dark mode, reading time, back-to-top, loading/error states, Telegram share, desktop search + categories dropdown, card View Details) on top of the Phase 11 MVP. Commerce/AI deferred._

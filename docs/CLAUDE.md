@@ -27,4 +27,4 @@ Living documentation. Keep these in sync — they are part of "definition of don
 - [ ] All CLAUDE.md "Last updated" lines bumped.
 
 ---
-_Last updated: Phase 11 — all docs synced to MVP code-complete._
+_Last updated: 2026-06-15 — docs synced after the UX/accessibility pass._

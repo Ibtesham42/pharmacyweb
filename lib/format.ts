@@ -67,3 +67,9 @@ export function jobLocation(city?: string | null, state?: string | null): string
 export function priceFromCents(cents: number, currency = "INR"): string {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency }).format(cents / 100);
 }
+
+/** Estimated reading time in whole minutes (≈200 wpm), minimum 1. */
+export function readingTime(content: string): number {
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
+}

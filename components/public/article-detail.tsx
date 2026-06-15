@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { CalendarDays, User } from "lucide-react";
+import { CalendarDays, Clock, User } from "lucide-react";
 import type { PostDetail, PostCard as PostCardData } from "@/services/posts";
 import { Markdown } from "@/components/markdown";
 import { Breadcrumbs, type Crumb } from "@/components/public/breadcrumbs";
@@ -8,7 +8,7 @@ import { ShareButtons } from "@/components/public/share-buttons";
 import { PostCard } from "@/components/public/post-card";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/format";
+import { formatDate, readingTime } from "@/lib/format";
 
 export function ArticleDetail({
   post,
@@ -44,6 +44,9 @@ export function ArticleDetail({
             </span>
             <span className="flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4" /> {formatDate(post.publishedAt)}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" /> {readingTime(post.content)} min read
             </span>
           </div>
         </header>

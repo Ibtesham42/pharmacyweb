@@ -42,6 +42,14 @@ export function ShareButtons({ path, title }: { path: string; title: string }) {
       >
         WhatsApp
       </a>
+      <a
+        href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-primary underline-offset-2 hover:underline"
+      >
+        Telegram
+      </a>
     </div>
   );
 }

@@ -35,3 +35,18 @@
 - **Security audit (live):** admin routes 307→login; protected APIs 401; Zod validation 400s; SQL-injection probes safe (parameterized); rate limiting 30/min verified (30 ok / 10 → 429); added a **Content-Security-Policy** header (the one missing header). `npm audit`: 0 exploitable production-runtime vulns (3 moderate are Next's bundled build-time postcss; high/critical are dev-only vitest/esbuild).
 - **Performance (#2 + #3):** detail pages (`/jobs|/articles|/news/[slug]`) made **SSG + ISR** via `generateStaticParams` + `revalidate=300`; moved view-counting off the render path to a client **ViewBeacon** → `/api/analytics` (POST_VIEW increments `viewCount`). Cached ad-slot lookups with `unstable_cache` (tag `ads`, invalidated by ad actions) and deduped post fetches with React `cache()`.
   - **Result (prod benchmark):** detail pages **2.9s → ~0.004s** (ISR cache hit); homepage ~3ms. List/search pages remain SSR (~1.1–1.9s) because they read `searchParams` — dominated by cross-region (Singapore) Neon latency; the deploy-side fix is co-locating the Vercel function region with the DB region.
+
+## 2026-06-15 — UX & content-display conformance pass (public site)
+- Audited the public site against the UX/content-display requirements; most of the spec was already met by the MVP, so this pass closed the concrete remaining gaps.
+- **Dark mode:** added `next-themes` + `components/theme-provider.tsx` (wraps root layout) + `components/public/theme-toggle.tsx` (mounted-guard placeholder, no hydration flash). `.dark` tokens and `darkMode:"class"` already existed.
+- **Reading time:** `readingTime()` in `lib/format.ts`, shown in `components/public/article-detail.tsx`.
+- **Back-to-top:** `components/public/back-to-top.tsx`, mounted once in `app/(public)/layout.tsx`.
+- **Loading/error states:** `components/public/card-skeleton.tsx` + `loading.tsx` for list (jobs/articles/news/categories/search) and detail routes; `components/public/error-state.tsx` + `app/(public)/error.tsx` + `app/global-error.tsx`.
+- **Share:** added Telegram to `components/public/share-buttons.tsx`.
+- **Cards:** `components/public/post-card.tsx` — every card now has a visual header (branded placeholder for imageless jobs) and a clickable "View details" link.
+- **Nav:** new `components/ui/dropdown-menu.tsx` (Radix); `app/(public)/layout.tsx` fetches categories via `safe(listPublicCategories())` and passes them to `site-header.tsx`, which adds a desktop Categories dropdown + compact inline `SearchBar` (new `compact` prop) + `ThemeToggle` (desktop & mobile) and lists categories in the mobile menu.
+- Implemented via the **frontend-agent** under the **ui_design_skill**; `typecheck`, `lint`, `build` all green (31 routes; expected `prisma:error` logs are caught by `safe()`).
+
+### Notes / follow-ups
+- Deferred as future-ready (per scope decision): Recently Viewed, Trending/Popular, Bookmark/Save.
+- `global-error.tsx` uses inline light-theme styles (it replaces the root layout, so it can't rely on Tailwind/theme).

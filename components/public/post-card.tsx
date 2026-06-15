@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Building2, Calendar } from "lucide-react";
+import { MapPin, Building2, Calendar, ArrowRight } from "lucide-react";
 import type { PostCard as PostCardType } from "@/services/posts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ export function PostCard({ post }: { post: PostCardType }) {
 
   return (
     <Card className="group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
-      {!isJob && post.featuredImage && (
+      {post.featuredImage ? (
         <Link href={href} className="relative block aspect-[16/9] overflow-hidden bg-muted">
           <Image
             src={post.featuredImage.url}
@@ -28,6 +28,18 @@ export function PostCard({ post }: { post: PostCardType }) {
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
+      ) : (
+        isJob && (
+          <Link
+            href={href}
+            aria-label={post.title}
+            className="flex aspect-[16/9] items-center justify-center bg-accent text-accent-foreground"
+          >
+            <span className="text-4xl font-bold uppercase">
+              {post.jobDetail?.companyName?.[0] ?? "J"}
+            </span>
+          </Link>
+        )
       )}
 
       <CardContent className="flex flex-1 flex-col gap-2 p-4">
@@ -69,9 +81,18 @@ export function PostCard({ post }: { post: PostCardType }) {
           post.excerpt && <p className="line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>
         )}
 
-        <p className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5" /> {formatRelative(post.publishedAt)}
-        </p>
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" /> {formatRelative(post.publishedAt)}
+          </span>
+          <Link
+            href={href}
+            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            aria-label={`View details: ${post.title}`}
+          >
+            View details <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

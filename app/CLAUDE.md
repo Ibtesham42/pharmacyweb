@@ -27,7 +27,9 @@ Covers the public site, the admin area, and Route Handlers. Maps to the spec's "
 
 - TailwindCSS + shadcn/ui in `components/ui`. Compose page-specific UI in `components/public` and `components/admin`.
 - Mobile-first: design at 360px first; large tap targets (min 44px); sticky search; bottom-safe spacing.
-- Reusable: `JobCard`, `ArticleCard`, `AdSlot`, `Breadcrumbs`, `SearchBar`, `Pagination`, `EmptyState`.
+- Reusable: `PostCard`, `AdSlot`, `Breadcrumbs`, `SearchBar` (`compact` prop), `Pagination`, `EmptyState`, `ErrorState`, `CardSkeleton`/`CardGridSkeleton`, `ThemeToggle`, `BackToTop`, `DropdownMenu`.
+- Dark mode: `next-themes` via `components/theme-provider.tsx` (in root layout); tokens in `globals.css` (`.dark`) + `darkMode:"class"`. Toggle with `ThemeToggle`.
+- Route states: provide `loading.tsx` (skeletons) and `error.tsx` per public segment; `app/global-error.tsx` is the root fallback.
 - Accessibility: semantic HTML, labels on inputs, focus states, WCAG AA contrast.
 
 ## Ads
@@ -44,4 +46,4 @@ Covers the public site, the admin area, and Route Handlers. Maps to the spec's "
 - [ ] No layout shift from ads/images.
 
 ---
-_Last updated: Phase 11 — public site + admin panel + API routes implemented._
+_Last updated: 2026-06-15 — UX pass: dark mode, reading time, back-to-top, loading/error states, Telegram share, desktop search + categories dropdown, card View Details._

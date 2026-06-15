@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here (format: [Keep a Changelog](https://keepachangelog.com/)).
 
+## [Unreleased] — 2026-06-15 — UX & accessibility pass
+
+### Added
+- **Dark mode** with system-preference detection and a header toggle; no flash on load.
+- **Reading time** estimate on article and news pages.
+- **Back-to-top** button on all public pages.
+- **Skeleton loading states** on list and detail routes; **error pages** with retry (route-level + global fallback).
+- **Telegram** share option (alongside WhatsApp, copy link, and native share).
+- **Desktop header**: inline search bar + Categories dropdown; categories also listed in the mobile menu.
+
+### Changed
+- Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.
+
 ## [0.1.0] — 2026-06-14 — MVP code-complete
 
 ### Added
