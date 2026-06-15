@@ -119,3 +119,12 @@
 .prose-content pre {
   @apply my-4 overflow-x-auto rounded-lg bg-muted p-4;
 }
+
+/* Clean printing (e.g. donation receipts): hide chrome and fixed widgets. */
+@media print {
+  header,
+  footer,
+  .fixed {
+    display: none !important;
+  }
+}

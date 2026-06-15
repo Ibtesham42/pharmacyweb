@@ -9,6 +9,7 @@ _Last updated: 2026-06-15 (AI module tables added)._ Source of truth for the ER 
 - Soft delete via `Post.deletedAt`; public reads filter `deletedAt = null AND status = PUBLISHED`.
 - Full-text search: raw-SQL migration adds a generated `tsvector` column + GIN index on `Post`, and enables `pg_trgm` for fuzzy matching.
 - **AI module** (migration `add_ai_module`): `AiConversation` 1:N `AiMessage` (anonymous, keyed by `clientId`), `AiRequestLog` (per-request usage analytics + error logs), `AiKnowledgeFile` (RAG source uploads). AI config lives in `SiteSetting` key `"ai"` (no secrets). Embeddings (pgvector `AiEmbedding`) are deferred — see `docs/AI.md`. Migration `3_ai_multimodal_modes` adds `AiMode` values `PLANT_ID` / `MEDICAL_DEVICE` / `STUDENT` (multimodal uploads are processed ephemerally — no extra tables).
+- **Donations** (migration `4_add_donations`): `Donation` (donor details, `amountPaise`, `method`, `status`, `receiptNo`, anonymity/consent, reason/feedback, razorpay/UPI refs) + enums `DonationStatus` / `DonationMethod`. Settings live in `SiteSetting` key `"donations"`; Razorpay keys are env-only. See `docs/DONATIONS.md`.
 
 ## ER diagram
 ```mermaid

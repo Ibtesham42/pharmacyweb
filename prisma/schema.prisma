@@ -508,3 +508,48 @@ model AiKnowledgeFile {
 
   @@index([status])
 }
+
+// ─────────────────────────── Donations ───────────────────────────
+// Donation config (enabled, UPI id, QR url, goals, amounts, messages) lives in
+// SiteSetting key "donations" (JSON). Razorpay keys live only in env, never in DB.
+enum DonationStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DonationMethod {
+  RAZORPAY
+  UPI_MANUAL
+}
+
+model Donation {
+  id                String         @id @default(cuid())
+  receiptNo         String         @unique
+  name              String
+  email             String
+  phone             String?
+  city              String?
+  state             String?
+  address           String?
+  amountPaise       Int
+  currency          String         @default("INR")
+  method            DonationMethod
+  status            DonationStatus @default(PENDING)
+  anonymous         Boolean        @default(false)
+  supporterConsent  Boolean        @default(false)
+  reason            String?
+  feedback          String?        @db.Text
+  source            String?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  transactionRef    String?
+  ip                String?
+  createdAt         DateTime       @default(now())
+  paidAt            DateTime?
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([createdAt])
+}

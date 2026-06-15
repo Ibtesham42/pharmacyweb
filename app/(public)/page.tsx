@@ -3,6 +3,9 @@ import { ArrowRight, Briefcase, Newspaper, BookOpen, Tag } from "lucide-react";
 import { getFeatured, getLatest } from "@/services/posts";
 import { listPublicCategories } from "@/services/categories";
 import { getHomepage } from "@/services/settings";
+import { getDonationSettings } from "@/services/donations";
+import { DEFAULT_DONATION_SETTINGS } from "@/lib/donations/config";
+import { DonateCta } from "@/components/public/donate-cta";
 import { SearchBar } from "@/components/public/search-bar";
 import { PostCard } from "@/components/public/post-card";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +44,7 @@ function SectionHeader({
 }
 
 export default async function HomePage() {
-  const [home, featured, jobs, articles, news, categories] = await Promise.all([
+  const [home, featured, jobs, articles, news, categories, donations] = await Promise.all([
     safe(getHomepage(), {
       heroTitle: "Find Your Next Pharmacy & Medical Career",
       heroSubtitle:
@@ -53,6 +56,7 @@ export default async function HomePage() {
     safe(getLatest("ARTICLE", 3), []),
     safe(getLatest("NEWS", 3), []),
     safe(listPublicCategories(), []),
+    safe(getDonationSettings(), DEFAULT_DONATION_SETTINGS),
   ]);
 
   return (
@@ -105,6 +109,12 @@ export default async function HomePage() {
                 <PostCard key={p.id} post={p} />
               ))}
             </div>
+          </section>
+        )}
+
+        {donations.enabled && (
+          <section className="mb-12">
+            <DonateCta source="homepage" />
           </section>
         )}
 

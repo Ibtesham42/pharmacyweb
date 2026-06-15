@@ -40,4 +40,4 @@ npm run db:seed             # seed admin + categories + India locations
 - [ ] Seed still runs idempotently.
 
 ---
-_Last updated: 2026-06-15 — AI models via `add_ai_module`; `3_ai_multimodal_modes` adds `AiMode` values (PLANT_ID/MEDICAL_DEVICE/STUDENT); pgvector `AiEmbedding` deferred (see `docs/AI.md`)._
+_Last updated: 2026-06-16 — AI models via `add_ai_module` + `3_ai_multimodal_modes`; `4_add_donations` adds the `Donation` model + enums (see `docs/DONATIONS.md`); pgvector `AiEmbedding` deferred._

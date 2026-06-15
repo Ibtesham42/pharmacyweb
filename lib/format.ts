@@ -73,3 +73,12 @@ export function readingTime(content: string): number {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 200));
 }
+
+/** Format paise as a clean INR amount (no decimals), e.g. 100000 -> "₹1,000". */
+export function formatINR(paise: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(paise / 100);
+}

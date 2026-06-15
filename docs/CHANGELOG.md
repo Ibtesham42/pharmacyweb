@@ -19,6 +19,8 @@ All notable changes to this project are documented here (format: [Keep a Changel
 
 - **Pharmacy Career Copilot** (`/copilot`): a unified AI dashboard — Chat, **Resume Analysis** (score, missing skills, improvements, ATS tips), **Job Match** (ranked live listings with match % and missing skills), **Interview Prep** (role-based questions + answer outlines), **Study** (chat over your notes), and **Personalized Learning Recommendations** (focus areas + real article links). Structured results with graceful text fallback; resume handled ephemerally (not stored). Admin toggle for career tools.
 
+- **Donation & Support platform** (`/donate`): voluntary donations via **Razorpay** (auto-verified) and **UPI/QR** (manual, no gateway). Donor form (anonymous option), printable receipts with a Supporter badge, "Support Us" CTA in the footer + homepage, and an admin Donations dashboard (settings incl. UPI ID + QR upload, donor management with verify/CSV export, and analytics: total raised, donors, monthly, avg, conversion, by-source). Razorpay secrets stay server-side.
+
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.
 

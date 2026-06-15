@@ -87,3 +87,17 @@
 - **Ephemeral/private:** resume extracted via existing `/api/ai/extract`, held in the browser (sessionStorage), reused across tabs; never stored. Usage logged via `AiRequestLog.feature` (RESUME/JOB_MATCH/INTERVIEW/LEARN) — **no new DB tables/migration**.
 - Admin `careerToolsEnabled` toggle; nav "Career Copilot" link; `AiChat` gained `defaultMode`/`storageNamespace` props (text chat otherwise unchanged).
 - Verified: `typecheck`, `lint`, `build` green (`/copilot` + 4 career routes).
+
+## 2026-06-16 — Donation & Support platform
+- Added a complete donation system (additive; existing features unchanged). **Razorpay** (signature + webhook verified) **and** **UPI/QR manual** (admin UPI ID + uploaded QR; donor submits UTR; admin verifies). Razorpay via REST + Node `crypto` — **no new deps**; keys env-only.
+- **DB:** `Donation` model + `DonationStatus`/`DonationMethod` enums (migration `4_add_donations`); settings in `SiteSetting` key `"donations"` (seeded create-only, disabled by default).
+- **lib/services:** `lib/donations/config.ts`, `lib/razorpay.ts`, donation Zod schemas, `formatINR`; `services/donations.ts` (create/markPaid/manual/adminSetStatus/stats/CSV/settings).
+- **API:** `app/api/donations/{create,verify,manual}` + `app/api/razorpay/webhook` (idempotent `markPaidByOrderId`). Rate-limit + honeypot + min/cap + gating.
+- **Public:** `/donate` (amounts, methods, donor form, Razorpay Checkout / UPI+QR), `/donate/receipt/[id]` (printable, receipt-safe), `DonateCta` in footer + homepage (gated). Global `@media print` rule hides chrome.
+- **Admin:** `/admin/donations` (Donors/Overview/Settings tabs), settings form with Cloudinary QR upload, donor table verify/reject, CSV export route; nav item added.
+- Verified: `typecheck`, `lint`, `build` green (`/donate`, `/donate/receipt/[id]`, 4 donation routes, `/admin/donations`).
+
+### Follow-ups
+- Apply `4_add_donations` (auto via Vercel `vercel-build`); enable + configure in Admin → Donations.
+- Razorpay: set keys + webhook secret in Vercel and register the webhook URL; UPI works without them.
+- Future: recurring/memberships/crowdfunding (design in `docs/DONATIONS.md`); email receipts (add Resend).

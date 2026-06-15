@@ -18,6 +18,7 @@ _Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · �
 | 10 Deployment | `vercel-build` runs migrations; CI workflow; README + deployment_skill runbook. Needs Neon+Cloudinary provisioning to go live. | ◐ |
 | 11 Documentation | CLAUDE.md ×5, SRS/ARCHITECTURE/DATABASE/ROADMAP/PROGRESS/CHANGELOG. | ☑ |
 | 12 AI (Phase 2) | Groq chat (streaming) + **multimodal image/document understanding** + **Career Copilot** (resume analysis, job match, interview prep, study, learning recs) + Admin AI Settings + safety + usage analytics; RAG/article-assistant/semantic-search designed (`docs/AI.md`). | ◐ |
+| 13 Donations | Support platform: Razorpay + UPI/QR, donor form, printable receipts, admin donor management + analytics, CSV export (`docs/DONATIONS.md`). Recurring/memberships designed. | ◐ |
 
 ### Remaining to go live (requires accounts/secrets)
 1. Provision Neon Postgres; set `DATABASE_URL` + `DIRECT_URL`.

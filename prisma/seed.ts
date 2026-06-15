@@ -103,7 +103,30 @@ async function seedSettings() {
       },
     },
   });
-  console.log(`✓ Site settings: ${settings.length + 1}`);
+  // Donation settings — create-only so re-seeding never clobbers admin values.
+  await prisma.siteSetting.upsert({
+    where: { key: "donations" },
+    update: {},
+    create: {
+      key: "donations",
+      value: {
+        enabled: false,
+        title: "Support PharmaCareers",
+        message:
+          "Your support helps us keep pharmacy jobs, medical content, AI tools and learning resources free and growing.",
+        pageContent:
+          "Donations fund AI tool maintenance, pharmacy educational content, job-discovery resources, and future platform improvements. Every contribution — big or small — helps the community.",
+        thankYouMessage: "Thank you for supporting our mission.",
+        upiId: "",
+        qrImageUrl: "",
+        minAmountPaise: 1000,
+        suggestedAmounts: [1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        goalPaise: 0,
+        monthlyGoalPaise: 0,
+      },
+    },
+  });
+  console.log(`✓ Site settings: ${settings.length + 2}`);
 }
 
 async function seedAds() {

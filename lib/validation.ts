@@ -7,6 +7,7 @@ import {
   AdSlot,
   AdType,
   AiMode,
+  DonationMethod,
 } from "@prisma/client";
 
 // ─────────────────────────── Auth ───────────────────────────
@@ -233,6 +234,52 @@ export const aiRecommendSchema = z.object({
   goal: z.string().min(2, "Tell us your goal").max(500),
   resumeText: z.string().max(200_000).optional(),
 });
+
+// ─────────────────────────── Donations ───────────────────────────
+export const donationCreateSchema = z.object({
+  name: z.string().min(2, "Please enter your name").max(120),
+  email: z.string().email("Enter a valid email"),
+  phone: z.string().max(20).optional().or(z.literal("")),
+  city: z.string().max(120).optional().or(z.literal("")),
+  state: z.string().max(120).optional().or(z.literal("")),
+  address: z.string().max(300).optional().or(z.literal("")),
+  amountPaise: z.coerce.number().int().min(100, "Amount is too small").max(50_000_000, "Amount is too large"),
+  method: z.nativeEnum(DonationMethod),
+  source: z.string().max(40).optional().or(z.literal("")),
+  anonymous: z.boolean().default(false),
+  supporterConsent: z.boolean().default(false),
+  reason: z.string().max(300).optional().or(z.literal("")),
+  feedback: z.string().max(2000).optional().or(z.literal("")),
+  // Honeypot — must be empty (bots fill it).
+  website: z.string().max(0).optional(),
+});
+export type DonationCreateInput = z.infer<typeof donationCreateSchema>;
+
+export const donationManualSchema = z.object({
+  donationId: z.string().cuid(),
+  transactionRef: z.string().min(4, "Enter the UPI reference / UTR").max(60),
+});
+
+export const donationVerifySchema = z.object({
+  donationId: z.string().cuid(),
+  razorpayPaymentId: z.string().min(4).max(120),
+  razorpaySignature: z.string().min(8).max(256),
+});
+
+export const donationSettingsSchema = z.object({
+  enabled: z.boolean(),
+  title: z.string().min(2).max(120),
+  message: z.string().max(500),
+  pageContent: z.string().max(5000),
+  thankYouMessage: z.string().max(500),
+  upiId: z.string().max(120).optional().or(z.literal("")),
+  qrImageUrl: z.string().url().optional().or(z.literal("")),
+  minAmountPaise: z.coerce.number().int().min(100).max(10_000_000),
+  suggestedAmounts: z.array(z.coerce.number().int().min(100).max(10_000_000)).max(12),
+  goalPaise: z.coerce.number().int().min(0).max(1_000_000_000),
+  monthlyGoalPaise: z.coerce.number().int().min(0).max(1_000_000_000),
+});
+export type DonationSettingsInput = z.infer<typeof donationSettingsSchema>;
 
 // ─────────────────────────── Search ───────────────────────────
 export const searchSchema = z.object({

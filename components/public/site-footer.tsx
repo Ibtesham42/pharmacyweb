@@ -2,6 +2,9 @@ import Link from "next/link";
 import { Pill } from "lucide-react";
 import { siteConfig } from "@/lib/site";
 import { NewsletterForm } from "@/components/public/newsletter-form";
+import { getDonationSettings } from "@/services/donations";
+import { DEFAULT_DONATION_SETTINGS } from "@/lib/donations/config";
+import { safe } from "@/lib/utils";
 
 const COLUMNS = [
   {
@@ -30,7 +33,10 @@ const COLUMNS = [
   },
 ];
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const donations = await safe(getDonationSettings(), DEFAULT_DONATION_SETTINGS);
+  const donateEnabled = donations.enabled;
+
   return (
     <footer className="mt-16 border-t bg-muted/30">
       <div className="container grid gap-8 py-12 md:grid-cols-2 lg:grid-cols-5">
@@ -58,6 +64,13 @@ export function SiteFooter() {
                   </Link>
                 </li>
               ))}
+              {col.title === "Company" && donateEnabled && (
+                <li>
+                  <Link href="/donate" className="text-sm font-medium text-primary hover:underline">
+                    Support Us
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
         ))}
