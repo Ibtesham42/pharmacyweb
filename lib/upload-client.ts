@@ -31,7 +31,18 @@ export async function uploadToCloudinary(file: File): Promise<UploadedMedia> {
     `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
     { method: "POST", body: fd },
   );
-  if (!upRes.ok) throw new Error("Upload to Cloudinary failed");
+  if (!upRes.ok) {
+    let detail = "";
+    try {
+      const errJson = (await upRes.json()) as { error?: { message?: string } };
+      detail = errJson?.error?.message ?? "";
+    } catch {
+      /* ignore */
+    }
+    throw new Error(
+      detail ? `Upload failed: ${detail}` : `Upload to Cloudinary failed (${upRes.status})`,
+    );
+  }
   const up = await upRes.json();
 
   const type = isImage ? "IMAGE" : file.type === "application/pdf" ? "PDF" : "DOC";
