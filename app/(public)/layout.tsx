@@ -11,6 +11,8 @@ import { AiChatFab } from "@/components/public/ai-chat-fab";
 import { getAiSettings } from "@/services/ai/settings";
 import { isGroqConfigured } from "@/lib/ai/groq";
 import { AI_MODE_KEYS, DEFAULT_AI_SETTINGS } from "@/lib/ai/config";
+import { getDonationSettings } from "@/services/donations";
+import { DEFAULT_DONATION_SETTINGS } from "@/lib/donations/config";
 
 // Site-wide AdSense loader on all public pages (required for Google's site
 // review/approval and Auto ads). Individual units only render <ins> + push.
@@ -18,9 +20,10 @@ const adsenseEnabled = process.env.NEXT_PUBLIC_ADSENSE_ENABLED === "true";
 const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const [categories, aiSettings] = await Promise.all([
+  const [categories, aiSettings, donationSettings] = await Promise.all([
     safe(listPublicCategories(), []),
     safe(getAiSettings(), DEFAULT_AI_SETTINGS),
+    safe(getDonationSettings(), DEFAULT_DONATION_SETTINGS),
   ]);
   const navCategories = categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
   const aiModes = AI_MODE_KEYS.filter((m) => aiSettings.modes[m]);
@@ -39,7 +42,7 @@ export default async function PublicLayout({ children }: { children: React.React
         />
       )}
       <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
-      <SiteHeader categories={navCategories} />
+      <SiteHeader categories={navCategories} donateEnabled={donationSettings.enabled} />
       <main className="min-h-[60vh]">{children}</main>
       <SiteFooter />
       <BackToTop />

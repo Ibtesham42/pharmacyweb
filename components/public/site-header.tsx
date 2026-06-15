@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Search, Pill, ChevronDown } from "lucide-react";
+import { Menu, X, Search, Pill, ChevronDown, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site";
+import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/public/search-bar";
 import { ThemeToggle } from "@/components/public/theme-toggle";
 import {
@@ -28,7 +29,13 @@ const NAV = [
 
 const NAV_AFTER = [{ href: "/about", label: "About" }];
 
-export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] }) {
+export function SiteHeader({
+  categories = [],
+  donateEnabled = false,
+}: {
+  categories?: HeaderCategory[];
+  donateEnabled?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -89,6 +96,14 @@ export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] 
         <SearchBar compact className="hidden w-64 lg:block" placeholder="Search…" />
 
         <div className="flex items-center gap-1">
+          {donateEnabled && (
+            <Button asChild size="sm" className="px-2.5 sm:px-3">
+              <Link href="/donate?src=nav" aria-label="Donate">
+                <Heart className="h-4 w-4" />
+                <span className="hidden sm:inline">Donate</span>
+              </Link>
+            </Button>
+          )}
           <div className="hidden md:block">
             <ThemeToggle />
           </div>
@@ -117,6 +132,15 @@ export function SiteHeader({ categories = [] }: { categories?: HeaderCategory[] 
       {open && (
         <nav className="border-t md:hidden" aria-label="Mobile">
           <div className="container flex flex-col py-2">
+            {donateEnabled && (
+              <Link
+                href="/donate?src=nav"
+                onClick={() => setOpen(false)}
+                className="mb-1 flex items-center gap-2 rounded-md bg-primary px-3 py-3 text-base font-medium text-primary-foreground"
+              >
+                <Heart className="h-4 w-4" /> Donate
+              </Link>
+            )}
             {NAV.map((item) => (
               <Link
                 key={item.href}
