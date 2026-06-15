@@ -12,6 +12,7 @@ Living documentation. Keep these in sync — they are part of "definition of don
 | `ROADMAP.md` | Phases, deliverables, task status. | Start/finish of any phase or task. |
 | `PROGRESS.md` | Chronological log: what was done, decisions, follow-ups. | After every work session/phase. |
 | `CHANGELOG.md` | User-facing change log (Keep a Changelog format). | Any shipped change. |
+| `AI.md` | AI module architecture + roadmap (Groq chat, admin settings, deferred RAG/job-AI). | AI features change. |
 
 ## Rules
 
@@ -27,4 +28,4 @@ Living documentation. Keep these in sync — they are part of "definition of don
 - [ ] All CLAUDE.md "Last updated" lines bumped.
 
 ---
-_Last updated: 2026-06-15 — docs synced after the UX/accessibility pass._
+_Last updated: 2026-06-15 — added `AI.md`; docs synced after the AI module (Phase 2 foundation)._

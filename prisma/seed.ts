@@ -76,7 +76,34 @@ async function seedSettings() {
       create: { key: s.key, value: s.value as object },
     });
   }
-  console.log(`✓ Site settings: ${settings.length}`);
+
+  // AI settings — create-only so re-seeding never clobbers admin-configured values.
+  await prisma.siteSetting.upsert({
+    where: { key: "ai" },
+    update: {},
+    create: {
+      key: "ai",
+      value: {
+        enabled: false,
+        maintenanceMode: false,
+        model: "llama-3.3-70b-versatile",
+        fastModel: "llama-3.1-8b-instant",
+        temperature: 0.4,
+        maxOutputTokens: 1024,
+        perMinuteLimit: 8,
+        dailyLimit: 2000,
+        perUserDailyLimit: 50,
+        modes: {
+          GENERAL: true,
+          PHARMACY_EDU: true,
+          CAREER: true,
+          JOB_SEARCH: true,
+          DRUG_INFO: true,
+        },
+      },
+    },
+  });
+  console.log(`✓ Site settings: ${settings.length + 1}`);
 }
 
 async function seedAds() {

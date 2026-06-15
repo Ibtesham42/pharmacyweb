@@ -51,3 +51,18 @@
 - Deferred as future-ready (per scope decision): Recently Viewed, Trending/Popular, Bookmark/Save.
 - `global-error.tsx` uses inline light-theme styles (it replaces the root layout, so it can't rely on Tailwind/theme).
 - AdSense enabled (`NEXT_PUBLIC_ADSENSE_ENABLED=true`, `NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-…`); added `app/ads.txt/route.ts`. Live ads still require the same `NEXT_PUBLIC_*` vars set in Vercel + redeploy (build-time inlined) and an active ADSENSE ad with a slot id in admin (`ad-slot.tsx` guards on all three).
+
+## 2026-06-15 — AI module (Phase 2 foundation): Groq chat + Admin AI Settings
+- **Decision:** Groq via the Vercel AI SDK (`ai` 6 + `@ai-sdk/groq`); server `streamText().toTextStreamResponse()`, custom client stream reader (no dependence on the v6 `useChat`/UIMessage surface). API verified against the installed `.d.ts` before coding. `GROQ_API_KEY` is env-only (server-side); AI config in `SiteSetting` key `"ai"`; chat is anonymous (per-browser `clientId`, no public auth).
+- **DB:** added enums `AiMode/AiRole/AiRequestStatus` and models `AiConversation`, `AiMessage`, `AiRequestLog`, `AiKnowledgeFile` (RAG-ready). Seed creates default `"ai"` settings (create-only). Migration `add_ai_module` to be applied (`prisma migrate dev`); `prisma generate` updates the client.
+- **lib/ai:** `config.ts` (settings type/defaults, model list, modes, suggested prompts, disclaimer), `safety.ts` (per-mode system prompts, `detectEmergency`, emergency notice), `groq.ts` (server-only provider). Zod `aiChatSchema`/`aiSettingsSchema` in `lib/validation.ts`.
+- **services/ai:** `settings`, `chat` (limits via `lib/ratelimit` + daily DB counts, message persistence), `usage` (stats + logs), `conversations` (history/clear).
+- **API:** `app/api/ai/chat/route.ts` (validate → gate enabled/maintenance/mode/key → limits → emergency short-circuit → stream → `onFinish` persist + `AiRequestLog`), `app/api/ai/conversations/route.ts`.
+- **Admin:** `/admin/ai` (stats cards + Settings/Conversations/Errors tabs), `ai-settings-form.tsx`, `actions.ts` (requireAdmin + audit + revalidate); nav item added to `admin-shell.tsx`.
+- **Public:** `/ai` page + `ai-chat.tsx` (streaming, typing, copy/regenerate/stop/clear, suggested prompts, mode select, localStorage history), `ai-chat-fab.tsx` (floating button, layout-gated by enabled), `ai-disclaimer.tsx`; nav "AI Assistant" added; `back-to-top` nudged to `bottom-24` to clear the FAB.
+- **Deferred (designed in `docs/AI.md`):** RAG (pgvector `AiEmbedding`), Resume Analyzer, Interview Prep, Job Match, AI Article Assistant, AI semantic search, multilingual (param plumbed), voice/STT/TTS and other future modules.
+- New deps: `ai`, `@ai-sdk/groq` (removed the unused `@ai-sdk/react`). New env: `GROQ_API_KEY` (set locally + in Vercel, then redeploy; enable in Admin → AI Settings).
+
+### Follow-ups
+- Apply the `add_ai_module` migration to Neon and set `GROQ_API_KEY`; then enable AI in admin to go live.
+- In-memory per-minute limiter is per-instance; daily limits use DB counts. Add Upstash Redis for strict global burst limits if needed.

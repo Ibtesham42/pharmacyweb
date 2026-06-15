@@ -22,6 +22,7 @@ const NAV = [
   { href: "/jobs", label: "Jobs" },
   { href: "/articles", label: "Articles" },
   { href: "/news", label: "News" },
+  { href: "/ai", label: "AI Assistant" },
 ];
 
 const NAV_AFTER = [{ href: "/about", label: "About" }];

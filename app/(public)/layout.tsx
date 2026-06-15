@@ -7,6 +7,10 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { listPublicCategories } from "@/services/categories";
 import { safe } from "@/lib/utils";
+import { AiChatFab } from "@/components/public/ai-chat-fab";
+import { getAiSettings } from "@/services/ai/settings";
+import { isGroqConfigured } from "@/lib/ai/groq";
+import { AI_MODE_KEYS, DEFAULT_AI_SETTINGS } from "@/lib/ai/config";
 
 // Site-wide AdSense loader on all public pages (required for Google's site
 // review/approval and Auto ads). Individual units only render <ins> + push.
@@ -14,8 +18,14 @@ const adsenseEnabled = process.env.NEXT_PUBLIC_ADSENSE_ENABLED === "true";
 const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const categories = await safe(listPublicCategories(), []);
+  const [categories, aiSettings] = await Promise.all([
+    safe(listPublicCategories(), []),
+    safe(getAiSettings(), DEFAULT_AI_SETTINGS),
+  ]);
   const navCategories = categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
+  const aiModes = AI_MODE_KEYS.filter((m) => aiSettings.modes[m]);
+  const aiEnabled =
+    aiSettings.enabled && !aiSettings.maintenanceMode && isGroqConfigured() && aiModes.length > 0;
 
   return (
     <>
@@ -33,6 +43,7 @@ export default async function PublicLayout({ children }: { children: React.React
       <main className="min-h-[60vh]">{children}</main>
       <SiteFooter />
       <BackToTop />
+      {aiEnabled && <AiChatFab availableModes={aiModes} />}
       <PageViewTracker />
     </>
   );

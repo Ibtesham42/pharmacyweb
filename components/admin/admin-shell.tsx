@@ -12,6 +12,7 @@ import {
   Tags,
   Megaphone,
   Mail,
+  Bot,
   Settings,
   UserCog,
   LogOut,
@@ -32,6 +33,7 @@ const NAV = [
   { href: "/admin/tags", label: "Tags", icon: Tags },
   { href: "/admin/ads", label: "Advertisements", icon: Megaphone },
   { href: "/admin/messages", label: "Messages", icon: Mail },
+  { href: "/admin/ai", label: "AI Settings", icon: Bot },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/account", label: "Account", icon: UserCog },
 ];

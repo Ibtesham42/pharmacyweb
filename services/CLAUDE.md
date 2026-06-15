@@ -5,7 +5,8 @@ Framework-agnostic domain logic. Maps to the spec's "backend" guide. This is whe
 ## Rules
 
 - **No Next.js / React imports here.** Pure TS + Prisma + Zod only. (Importing `next/cache` for revalidation is the one allowed exception, kept in route/action callers — prefer returning data and revalidating in the caller.)
-- Each domain has a file/folder: `posts`, `jobs`, `search`, `media`, `ads`, `analytics`, `contact`, `auth`.
+- Each domain has a file/folder: `posts`, `jobs`, `search`, `media`, `ads`, `analytics`, `contact`, `auth`, `ai`.
+- `ai/` holds the AI domain (`settings`, `chat`, `usage`, `conversations`). Groq provider + prompts/safety live in `lib/ai/*`; the `GROQ_API_KEY` is server-only. See `docs/AI.md`.
 - Functions take **validated** inputs (Zod schemas live in `lib/validation`). Validate at the edge (route/action), pass typed data in.
 - Throw typed domain errors; let callers map to HTTP/UI responses.
 - All DB access goes through `lib/prisma` (singleton). Never instantiate `PrismaClient` here.
@@ -29,4 +30,4 @@ Framework-agnostic domain logic. Maps to the spec's "backend" guide. This is whe
 - [ ] Soft-delete respected in reads (`deletedAt: null`).
 
 ---
-_Last updated: Phase 11 — posts, search, categories, tags, media, ads, analytics, contact, settings services implemented._
+_Last updated: 2026-06-15 — added `services/ai` (Groq chat, settings, usage, conversations); see `docs/AI.md`._

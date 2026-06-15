@@ -13,6 +13,8 @@ All notable changes to this project are documented here (format: [Keep a Changel
 - **Desktop header**: inline search bar + Categories dropdown; categories also listed in the mobile menu.
 - **`ads.txt`** route for Google AdSense (publisher id derived from `NEXT_PUBLIC_ADSENSE_CLIENT`).
 - Site-wide AdSense loader script on all public pages (for Google site review/approval + Auto ads); per-unit components now render only the `<ins>` to avoid a duplicate loader.
+- **AI assistant (Phase 2 foundation):** Groq-powered, streaming healthcare chat at `/ai` and a floating chat button on every public page — knowledge modes (general, pharmacy education, career, job search, drug info), suggested prompts, copy/regenerate/stop/clear, markdown answers, and a permanent medical-safety disclaimer with emergency handling.
+- **Admin → AI Settings:** enable/disable AI, maintenance mode, model selection, rate/daily limits, per-mode toggles, plus usage stats (requests, active users, tokens, errors, avg response time) and conversation/error logs. `GROQ_API_KEY` is server-only.
 
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.

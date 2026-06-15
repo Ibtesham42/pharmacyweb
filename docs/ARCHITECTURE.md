@@ -1,6 +1,6 @@
 # Architecture — Pharmacy Job Portal
 
-_Last updated: Phase 2._
+_Last updated: 2026-06-15 — AI module (Phase 2 foundation); see `docs/AI.md`._
 
 ## Overview
 Unified Next.js 15 (App Router) full-stack app on Vercel. Server Components render content (SSR/ISR) for SEO; Route Handlers expose REST for client/admin actions; Server Actions handle admin mutations. Prisma → Neon Postgres. Media → Cloudinary (signed uploads).
@@ -9,9 +9,9 @@ Unified Next.js 15 (App Router) full-stack app on Vercel. Server Components rend
 ```
 app/        UI + routes (RSC, client islands, Route Handlers, Server Actions)
   ↓ calls
-services/   domain logic — NO framework imports (posts, jobs, search, media, ads, analytics, contact, auth)
+services/   domain logic — NO framework imports (posts, jobs, search, media, ads, analytics, contact, auth, ai)
   ↓ uses
-lib/        prisma (singleton), auth, cloudinary, seo, validation (zod), ratelimit, utils
+lib/        prisma (singleton), auth, cloudinary, seo, validation (zod), ratelimit, utils, ai (Groq provider + safety)
   ↓
 Neon Postgres (Prisma)   |   Cloudinary (media CDN)
 ```
@@ -22,6 +22,7 @@ Rationale: keeping domain logic in `services/` lets future AI modules, a standal
 - **Search**: form → `/search` (RSC) or `/api/search` → `services/search` (Postgres FTS + trigram) → results; logs `AnalyticsEvent(SEARCH)`.
 - **Admin mutation**: admin form (client) → Server Action → Zod validate → `services/*` → Prisma → `AuditLog` → `revalidateTag/Path`.
 - **Upload**: client → `/api/media/upload` → validate MIME/size → signed Cloudinary upload → `Media` row.
+- **AI chat**: client → `/api/ai/chat` → gate (enabled/maintenance/mode, rate + daily limits, emergency safety) → Groq `streamText` → text stream; `onFinish` persists messages + `AiRequestLog`. Anonymous (`clientId`); `GROQ_API_KEY` server-only. See `docs/AI.md`.
 
 ## Cross-cutting
 - **Auth**: Auth.js (NextAuth v5) credentials + JWT session; `middleware.ts` gates `/admin/*`.

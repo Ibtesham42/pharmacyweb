@@ -1,6 +1,6 @@
 # Roadmap — Pharmacy Job Portal
 
-_Last updated: Phase 11 (MVP code-complete)._ Status: ☐ todo · ◐ in progress · ☑ done
+_Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · ◐ in progress · ☑ done
 
 ## MVP milestone
 
@@ -17,6 +17,7 @@ _Last updated: Phase 11 (MVP code-complete)._ Status: ☐ todo · ◐ in progres
 | 9 Testing | Unit tests (Vitest, 17 passing); build/typecheck/lint green. E2E (Playwright) scaffolded for later. | ☑ |
 | 10 Deployment | `vercel-build` runs migrations; CI workflow; README + deployment_skill runbook. Needs Neon+Cloudinary provisioning to go live. | ◐ |
 | 11 Documentation | CLAUDE.md ×5, SRS/ARCHITECTURE/DATABASE/ROADMAP/PROGRESS/CHANGELOG. | ☑ |
+| 12 AI (Phase 2) | Groq chat (streaming) + Admin AI Settings + safety guardrails + usage analytics; RAG/resume/interview/job-match/article-assistant designed (`docs/AI.md`). | ◐ |
 
 ### Remaining to go live (requires accounts/secrets)
 1. Provision Neon Postgres; set `DATABASE_URL` + `DIRECT_URL`.
@@ -24,9 +25,10 @@ _Last updated: Phase 11 (MVP code-complete)._ Status: ☐ todo · ◐ in progres
 3. Set `NEXTAUTH_SECRET`, `NEXT_PUBLIC_SITE_URL`, admin seed vars.
 4. `npm run db:deploy && npm run db:seed`, then deploy to Vercel.
 5. (Optional) Add AdSense client id + `NEXT_PUBLIC_ADSENSE_ENABLED=true` and activate ad slots in admin.
+6. (AI) Apply migration `add_ai_module`, set `GROQ_API_KEY` (local + Vercel), then enable AI in Admin → AI Settings.
 
 ## Future milestones (post-MVP, separate approvals)
 - Commerce: courses marketplace, paid-PDF store, checkout (Razorpay), orders/payments UI.
 - Newsletter + sponsorships; featured/sponsored job listings; affiliate.
-- AI modules: article generation, SEO suggestions, job summaries, resume review, career guidance.
+- AI modules: **foundation shipped** (Groq chat + admin settings, see `docs/AI.md`). Next: RAG knowledge base (pgvector), resume analyzer, interview prep, job match, AI article assistant, AI semantic search, multilingual.
 - Scaling: Redis cache, queue/worker, analytics rollups, read replicas.

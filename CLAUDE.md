@@ -7,7 +7,7 @@
 
 A mobile-first, SEO-first platform for **pharmacy & medical jobs + medical news/articles**, with a future store for courses and paid PDFs. Single admin publishes all content. India-focused (INR, Indian states/cities, govt + private pharma).
 
-Full plan: see `docs/SRS.md`, `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/ROADMAP.md`.
+Full plan: see `docs/SRS.md`, `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/ROADMAP.md`, `docs/AI.md`.
 
 ## Tech stack (locked)
 
@@ -67,4 +67,4 @@ Copy `.env.example` → `.env`. Never commit secrets. Required: `DATABASE_URL`, 
 6. Run `npm run typecheck && npm run lint && npm run build` before declaring a phase done.
 
 ---
-_Last updated: 2026-06-15 — UX/accessibility pass (dark mode, reading time, back-to-top, loading/error states, Telegram share, desktop search + categories dropdown, card View Details) on top of the Phase 11 MVP. Commerce/AI deferred._
+_Last updated: 2026-06-15 — AI module (Phase 2 foundation): Groq chat + Admin AI Settings (see `docs/AI.md`), on top of the UX/accessibility pass and Phase 11 MVP. Commerce deferred._

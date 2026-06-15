@@ -1,6 +1,6 @@
 # Database Design — Pharmacy Job Portal
 
-_Last updated: Phase 2._ Source of truth for the ER model. Implemented in `prisma/schema.prisma`.
+_Last updated: 2026-06-15 (AI module tables added)._ Source of truth for the ER model. Implemented in `prisma/schema.prisma`.
 
 ## Design notes
 - Content uses a single **`Post`** table with a `type` discriminator (JOB | NEWS | ARTICLE) + a 1:1 **`JobDetail`** extension for job-only fields. Shared: tags, category, SEO, media, full-text search.
@@ -8,6 +8,7 @@ _Last updated: Phase 2._ Source of truth for the ER model. Implemented in `prism
 - Money as integer minor units (`*Cents`/paise) + `currency` (default `INR`).
 - Soft delete via `Post.deletedAt`; public reads filter `deletedAt = null AND status = PUBLISHED`.
 - Full-text search: raw-SQL migration adds a generated `tsvector` column + GIN index on `Post`, and enables `pg_trgm` for fuzzy matching.
+- **AI module** (migration `add_ai_module`): `AiConversation` 1:N `AiMessage` (anonymous, keyed by `clientId`), `AiRequestLog` (per-request usage analytics + error logs), `AiKnowledgeFile` (RAG source uploads). AI config lives in `SiteSetting` key `"ai"` (no secrets). Embeddings (pgvector `AiEmbedding`) are deferred — see `docs/AI.md`.
 
 ## ER diagram
 ```mermaid

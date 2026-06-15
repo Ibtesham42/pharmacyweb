@@ -6,6 +6,7 @@ import {
   MediaType,
   AdSlot,
   AdType,
+  AiMode,
 } from "@prisma/client";
 
 // ─────────────────────────── Auth ───────────────────────────
@@ -155,6 +156,41 @@ export type ContactInput = z.infer<typeof contactSchema>;
 export const newsletterSchema = z.object({
   email: z.string().email("Enter a valid email"),
 });
+
+// ─────────────────────────── AI ───────────────────────────
+export const aiChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1, "Message is empty").max(8000, "Message is too long"),
+});
+
+export const aiChatSchema = z.object({
+  clientId: z.string().min(8).max(64),
+  mode: z.nativeEnum(AiMode).default(AiMode.GENERAL),
+  conversationId: z.string().cuid().optional(),
+  language: z.enum(["en", "hi", "hinglish"]).optional(),
+  messages: z.array(aiChatMessageSchema).min(1, "No messages").max(40),
+});
+export type AiChatInput = z.infer<typeof aiChatSchema>;
+
+export const aiSettingsSchema = z.object({
+  enabled: z.boolean(),
+  maintenanceMode: z.boolean(),
+  model: z.string().min(1).max(80),
+  fastModel: z.string().min(1).max(80),
+  temperature: z.coerce.number().min(0).max(2),
+  maxOutputTokens: z.coerce.number().int().min(128).max(8192),
+  perMinuteLimit: z.coerce.number().int().min(1).max(120),
+  dailyLimit: z.coerce.number().int().min(1).max(100_000),
+  perUserDailyLimit: z.coerce.number().int().min(1).max(10_000),
+  modes: z.object({
+    GENERAL: z.boolean(),
+    PHARMACY_EDU: z.boolean(),
+    CAREER: z.boolean(),
+    JOB_SEARCH: z.boolean(),
+    DRUG_INFO: z.boolean(),
+  }),
+});
+export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;
 
 // ─────────────────────────── Search ───────────────────────────
 export const searchSchema = z.object({

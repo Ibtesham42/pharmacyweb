@@ -7,6 +7,7 @@ Covers the public site, the admin area, and Route Handlers. Maps to the spec's "
 - `app/(public)/` — public, indexable pages. SSR/ISR. Group route (no URL segment).
 - `app/admin/` — protected. Gated by `middleware.ts` (redirect to `/admin/login` if not authed).
 - `app/api/` — Route Handlers (REST) for client fetches, uploads, webhooks.
+- AI assistant: `app/(public)/ai` (chat page), `app/admin/(panel)/ai` (settings), `app/api/ai/*` (streaming chat). See `docs/AI.md`.
 - `app/sitemap.ts`, `app/robots.ts`, `app/manifest.ts`, `app/feed.xml/route.ts` — SEO/PWA.
 
 ## Rendering rules
@@ -46,4 +47,4 @@ Covers the public site, the admin area, and Route Handlers. Maps to the spec's "
 - [ ] No layout shift from ads/images.
 
 ---
-_Last updated: 2026-06-15 — UX pass: dark mode, reading time, back-to-top, loading/error states, Telegram share, desktop search + categories dropdown, card View Details._
+_Last updated: 2026-06-15 — AI module (chat page, floating chat button, admin AI settings, streaming `/api/ai/chat`) + the UX pass (dark mode, loading/error states, etc.)._
