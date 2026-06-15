@@ -11,6 +11,7 @@ All notable changes to this project are documented here (format: [Keep a Changel
 - **Skeleton loading states** on list and detail routes; **error pages** with retry (route-level + global fallback).
 - **Telegram** share option (alongside WhatsApp, copy link, and native share).
 - **Desktop header**: inline search bar + Categories dropdown; categories also listed in the mobile menu.
+- **`ads.txt`** route for Google AdSense (publisher id derived from `NEXT_PUBLIC_ADSENSE_CLIENT`).
 
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.

@@ -50,3 +50,4 @@
 ### Notes / follow-ups
 - Deferred as future-ready (per scope decision): Recently Viewed, Trending/Popular, Bookmark/Save.
 - `global-error.tsx` uses inline light-theme styles (it replaces the root layout, so it can't rely on Tailwind/theme).
+- AdSense enabled (`NEXT_PUBLIC_ADSENSE_ENABLED=true`, `NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-…`); added `app/ads.txt/route.ts`. Live ads still require the same `NEXT_PUBLIC_*` vars set in Vercel + redeploy (build-time inlined) and an active ADSENSE ad with a slot id in admin (`ad-slot.tsx` guards on all three).
