@@ -203,6 +203,7 @@ export const aiSettingsSchema = z.object({
   visionModel: z.string().min(1).max(80),
   imageAnalysisEnabled: z.boolean(),
   documentAnalysisEnabled: z.boolean(),
+  careerToolsEnabled: z.boolean(),
   temperature: z.coerce.number().min(0).max(2),
   maxOutputTokens: z.coerce.number().int().min(128).max(8192),
   perMinuteLimit: z.coerce.number().int().min(1).max(120),
@@ -214,6 +215,24 @@ export const aiSettingsSchema = z.object({
   modes: aiModesSchema,
 });
 export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;
+
+// Career Copilot tool inputs
+export const aiResumeSchema = z.object({
+  clientId: z.string().min(8).max(64),
+  resumeText: z.string().min(50, "Please provide more résumé text").max(200_000),
+});
+
+export const aiInterviewSchema = z.object({
+  clientId: z.string().min(8).max(64),
+  role: z.string().min(2).max(120),
+  jobContext: z.string().max(4000).optional(),
+});
+
+export const aiRecommendSchema = z.object({
+  clientId: z.string().min(8).max(64),
+  goal: z.string().min(2, "Tell us your goal").max(500),
+  resumeText: z.string().max(200_000).optional(),
+});
 
 // ─────────────────────────── Search ───────────────────────────
 export const searchSchema = z.object({

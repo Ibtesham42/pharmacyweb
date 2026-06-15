@@ -30,4 +30,4 @@ Framework-agnostic domain logic. Maps to the spec's "backend" guide. This is whe
 - [ ] Soft-delete respected in reads (`deletedAt: null`).
 
 ---
-_Last updated: 2026-06-15 — added `services/ai` (Groq chat, settings, usage, conversations); see `docs/AI.md`._
+_Last updated: 2026-06-15 — `services/ai` (chat, settings, usage, conversations, **career**: résumé/job-match/interview/learning); see `docs/AI.md`._

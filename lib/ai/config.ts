@@ -22,6 +22,7 @@ export interface AiSettings {
   visionModel: string;
   imageAnalysisEnabled: boolean;
   documentAnalysisEnabled: boolean;
+  careerToolsEnabled: boolean;
   temperature: number;
   maxOutputTokens: number;
   /** Requests per IP per minute (burst). */
@@ -47,6 +48,7 @@ export const DEFAULT_AI_SETTINGS: AiSettings = {
   visionModel: "meta-llama/llama-4-scout-17b-16e-instruct",
   imageAnalysisEnabled: true,
   documentAnalysisEnabled: true,
+  careerToolsEnabled: true,
   temperature: 0.4,
   maxOutputTokens: 1024,
   perMinuteLimit: 8,

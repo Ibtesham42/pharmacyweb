@@ -17,6 +17,8 @@ All notable changes to this project are documented here (format: [Keep a Changel
 - **Admin → AI Settings:** enable/disable AI, maintenance mode, model selection, rate/daily limits, per-mode toggles, plus usage stats (requests, active users, tokens, errors, avg response time) and conversation/error logs. `GROQ_API_KEY` is server-only.
 - **AI multimodal (image + document understanding):** attach medicine/plant/device/prescription photos or lab reports (vision + OCR) and PDF/DOCX/TXT files to chat about them (summaries, Q&A, key points, MCQs, translation). New medicinal-plant, medical-device, and pharmacy-student modes; confidence indicators + "verify with experts" safety wording. Uploads are processed **ephemerally (not stored)**. Admin adds image/document toggles, a vision model, size limits, and a per-day upload cap.
 
+- **Pharmacy Career Copilot** (`/copilot`): a unified AI dashboard — Chat, **Résumé Analysis** (score, missing skills, improvements, ATS tips), **Job Match** (ranked live listings with match % and missing skills), **Interview Prep** (role-based questions + answer outlines), **Study** (chat over your notes), and **Personalized Learning Recommendations** (focus areas + real article links). Structured results with graceful text fallback; résumé handled ephemerally (not stored). Admin toggle for career tools.
+
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.
 

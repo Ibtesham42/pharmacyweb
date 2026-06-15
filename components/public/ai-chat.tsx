@@ -59,6 +59,8 @@ export function AiChat({
   documentEnabled = false,
   maxImageMB = 8,
   maxDocMB = 15,
+  defaultMode,
+  storageNamespace,
 }: {
   enabled: boolean;
   availableModes: AiModeKey[];
@@ -67,12 +69,17 @@ export function AiChat({
   documentEnabled?: boolean;
   maxImageMB?: number;
   maxDocMB?: number;
+  defaultMode?: AiModeKey;
+  storageNamespace?: string;
 }) {
   const modes = availableModes.length ? availableModes : (["GENERAL"] as AiModeKey[]);
+  const historyKey = storageNamespace ? `${HISTORY_KEY}:${storageNamespace}` : HISTORY_KEY;
   const [clientId, setClientId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [mode, setMode] = useState<AiModeKey>(modes[0]);
+  const [mode, setMode] = useState<AiModeKey>(
+    defaultMode && modes.includes(defaultMode) ? defaultMode : modes[0],
+  );
   const [streaming, setStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -98,7 +105,7 @@ export function AiChat({
     }
     setClientId(id);
     try {
-      const raw = localStorage.getItem(HISTORY_KEY);
+      const raw = localStorage.getItem(historyKey);
       if (raw) {
         const saved = JSON.parse(raw) as {
           messages?: ChatMessage[];
@@ -124,9 +131,9 @@ export function AiChat({
       content: m.content,
       docName: m.docName,
     }));
-    localStorage.setItem(HISTORY_KEY, JSON.stringify({ messages: persistable, mode, conversationId }));
+    localStorage.setItem(historyKey, JSON.stringify({ messages: persistable, mode, conversationId }));
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, mode, conversationId, clientId]);
+  }, [messages, mode, conversationId, clientId, historyKey]);
 
   async function handleFiles(files: FileList) {
     for (const file of Array.from(files)) {

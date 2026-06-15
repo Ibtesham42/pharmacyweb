@@ -5,11 +5,11 @@ AI features can be added without refactoring. Follows the repo layering: `app/` 
 
 ## Status (Phase 2 — foundation shipped)
 
-**Built now:** Basic AI Chat (streaming); **image + document understanding** (vision + OCR via a Groq
-Llama 4 model; PDF/DOCX/TXT text extraction); Admin AI Settings + usage analytics; safety guardrails;
-and 8 knowledge modes (incl. medicinal-plant, medical-device, pharmacy-student). **Designed/deferred:**
-RAG, Resume Analyzer, Interview Prep, Job Match, AI Article Assistant, AI semantic search, multilingual,
-voice/STT/TTS, camera medicine scanner, barcode scanner, drug-interaction checker.
+**Built now:** AI Chat (streaming); **image + document understanding** (vision + OCR via a Groq Llama 4
+model; PDF/DOCX/TXT text extraction); the **Career Copilot** (`/copilot`: chat, résumé analysis, job
+matching, interview prep, study help, learning recommendations); Admin AI Settings + usage analytics;
+safety guardrails; and 8 knowledge modes. **Designed/deferred:** RAG, AI Article Assistant, AI semantic
+search, multilingual, voice/STT/TTS, camera medicine scanner, barcode scanner, drug-interaction checker.
 
 ## Stack & decisions
 
@@ -35,6 +35,7 @@ voice/STT/TTS, camera medicine scanner, barcode scanner, drug-interaction checke
 | Validation (Zod) | `lib/validation.ts` (`aiChatSchema`, `aiSettingsSchema`) |
 | Domain logic | `services/ai/{settings,chat,usage,conversations}.ts` |
 | API | `app/api/ai/chat/route.ts` (multimodal streaming), `app/api/ai/extract/route.ts` (doc text), `app/api/ai/conversations/route.ts` |
+| Career Copilot | `lib/ai/career.ts`, `services/ai/career.ts`, `app/api/ai/career/*`, `app/(public)/copilot`, `components/public/career-copilot.tsx` |
 | Admin UI | `app/admin/(panel)/ai/{page,actions}.tsx`, `components/admin/ai-settings-form.tsx` |
 | Public UI | `app/(public)/ai/page.tsx`, `components/public/{ai-chat,ai-chat-fab,ai-disclaimer}.tsx` |
 | DB | `prisma/schema.prisma` — `AiConversation`, `AiMessage`, `AiRequestLog`, `AiKnowledgeFile` + enums |
@@ -74,14 +75,25 @@ voice/STT/TTS, camera medicine scanner, barcode scanner, drug-interaction checke
 - Modes `PLANT_ID` / `MEDICAL_DEVICE` / `STUDENT` tailor the assistant for plant ID, device help, and
   student study aids (summaries / MCQs / flashcards).
 
+## Career Copilot (`/copilot`)
+Unified dashboard — tabs **Chat · Résumé · Job Match · Interview · Study · Learn** — reusing `AiChat`
+(Study uses `defaultMode="STUDENT"` + a separate `storageNamespace`).
+- **Structured tools** via the AI SDK `generateObject` (typed Zod schemas in `lib/ai/career.ts`) →
+  score bars, match %, skill chips. On failure each tool falls back to a `generateText` markdown answer
+  (`ResultPanel`), so it never hard-crashes.
+- `services/ai/career.ts`: `analyzeResume`, `matchJobs` (reads live jobs via `listPosts`),
+  `interviewQuestions`, `recommendLearning` (reads articles/categories); routes at `app/api/ai/career/*`.
+- **Ephemeral & private:** the résumé is extracted (reusing `/api/ai/extract`) and held in the browser
+  (sessionStorage), reused across tabs — never stored server-side. Usage logged via `AiRequestLog.feature`
+  (`RESUME` / `JOB_MATCH` / `INTERVIEW` / `LEARN`). Admin toggle `careerToolsEnabled`.
+
 ## Deferred design (build later, no refactor needed)
 
 - **RAG (pgvector on Neon):** `AiKnowledgeFile` table exists for admin uploads. Add an `AiEmbedding`
   table via a raw SQL migration (`CREATE EXTENSION vector` + `vector` column + ivfflat/hnsw index),
   an ingestion job (chunk → embed → store), and a retrieval step that injects top-k context into the
   system prompt. Alternative: Qdrant (rejected — pgvector reuses existing Postgres, zero new infra).
-- **Job AI tools:** Resume Analyzer, Interview Prep, Job Match — add `services/ai/*` functions +
-  `app/api/ai/*` routes + feature flags in `AiSettings`. Reuse `streamText`/`generateText`.
+- **Job AI tools:** ✅ shipped in the Career Copilot (résumé analysis, job matching, interview prep) — see the Career Copilot section above.
 - **AI Article Assistant (admin):** outline/SEO title/meta/tags/summary buttons in
   `components/admin/post-form.tsx` calling a new admin-only AI route (human approval before publish).
 - **AI semantic search:** embed posts; vector search alongside the existing Postgres FTS.

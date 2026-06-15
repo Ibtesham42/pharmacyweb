@@ -79,3 +79,11 @@
 ### Follow-ups
 - Apply `3_ai_multimodal_modes` to Neon (additive enum values; also applied automatically by Vercel `vercel-build`).
 - Verify a real image reaches the Groq Llama-4 vision model in a live smoke test once `GROQ_API_KEY` is active.
+
+## 2026-06-15 — Pharmacy Career Copilot (unified career experience)
+- New unified **`/copilot`** dashboard (tabs: Chat · Résumé · Job Match · Interview · Study · Learn), reusing `AiChat` (Study = STUDENT mode + separate `storageNamespace`).
+- **Structured tools** via AI SDK `generateObject` (typed Zod schemas in `lib/ai/career.ts`): résumé score/strengths/missing/improvements/ATS; job match % vs **live** listings (`listPosts`); interview Q&A by role; learning recs from real articles/categories. Each has a `generateText` markdown fallback so it never hard-fails.
+- `services/ai/career.ts` (`analyzeResume`/`matchJobs`/`interviewQuestions`/`recommendLearning`); routes `app/api/ai/career/{resume,job-match,interview,recommend}`; gated by `enabled` + `careerToolsEnabled` + key + `checkLimits`.
+- **Ephemeral/private:** résumé extracted via existing `/api/ai/extract`, held in the browser (sessionStorage), reused across tabs; never stored. Usage logged via `AiRequestLog.feature` (RESUME/JOB_MATCH/INTERVIEW/LEARN) — **no new DB tables/migration**.
+- Admin `careerToolsEnabled` toggle; nav "Career Copilot" link; `AiChat` gained `defaultMode`/`storageNamespace` props (text chat otherwise unchanged).
+- Verified: `typecheck`, `lint`, `build` green (`/copilot` + 4 career routes).

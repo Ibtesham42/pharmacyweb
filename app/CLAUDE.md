@@ -47,4 +47,4 @@ Covers the public site, the admin area, and Route Handlers. Maps to the spec's "
 - [ ] No layout shift from ads/images.
 
 ---
-_Last updated: 2026-06-15 — AI module incl. multimodal uploads (image/document chat, `/api/ai/extract`, vision model) + admin AI settings + the UX pass (dark mode, loading/error states, etc.)._
+_Last updated: 2026-06-15 — AI module: multimodal chat + Career Copilot (`/copilot`, `/api/ai/career/*`) + admin AI settings + the UX pass (dark mode, loading/error states, etc.)._
