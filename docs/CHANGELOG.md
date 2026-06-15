@@ -15,6 +15,7 @@ All notable changes to this project are documented here (format: [Keep a Changel
 - Site-wide AdSense loader script on all public pages (for Google site review/approval + Auto ads); per-unit components now render only the `<ins>` to avoid a duplicate loader.
 - **AI assistant (Phase 2 foundation):** Groq-powered, streaming healthcare chat at `/ai` and a floating chat button on every public page — knowledge modes (general, pharmacy education, career, job search, drug info), suggested prompts, copy/regenerate/stop/clear, markdown answers, and a permanent medical-safety disclaimer with emergency handling.
 - **Admin → AI Settings:** enable/disable AI, maintenance mode, model selection, rate/daily limits, per-mode toggles, plus usage stats (requests, active users, tokens, errors, avg response time) and conversation/error logs. `GROQ_API_KEY` is server-only.
+- **AI multimodal (image + document understanding):** attach medicine/plant/device/prescription photos or lab reports (vision + OCR) and PDF/DOCX/TXT files to chat about them (summaries, Q&A, key points, MCQs, translation). New medicinal-plant, medical-device, and pharmacy-student modes; confidence indicators + "verify with experts" safety wording. Uploads are processed **ephemerally (not stored)**. Admin adds image/document toggles, a vision model, size limits, and a per-day upload cap.
 
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.

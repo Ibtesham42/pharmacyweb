@@ -66,3 +66,16 @@
 ### Follow-ups
 - Apply the `add_ai_module` migration to Neon and set `GROQ_API_KEY`; then enable AI in admin to go live.
 - In-memory per-minute limiter is per-instance; daily limits use DB counts. Add Upstash Redis for strict global burst limits if needed.
+
+## 2026-06-15 — AI multimodal (image + document understanding)
+- Extended the AI assistant additively (text chat unchanged) with **image** and **document** understanding.
+- **Decisions:** uploads are **ephemeral/not stored** (images → base64 to a Groq vision model in-memory; docs → server text-extraction, text held client-side and re-sent on follow-ups). Documents via `unpdf` (PDF) + `mammoth` (DOCX) + TXT. Added 3 modes (`PLANT_ID`, `MEDICAL_DEVICE`, `STUDENT`).
+- **DB:** migration `3_ai_multimodal_modes` adds the 3 `AiMode` enum values (additive). No new tables (uploads ephemeral); multimodal turns tagged via `AiRequestLog.feature` (`CHAT_IMAGE`/`CHAT_DOC`).
+- **lib/ai:** `extract.ts` (unpdf/mammoth + Promise.withResolvers polyfill); `config.ts`/`safety.ts` extended (vision model, image/doc flags, limits, new modes, multimodal + confidence/safety guidance). Zod `aiChatSchema` gains `attachments`; `aiSettingsSchema` gains the new fields/modes.
+- **API:** new `app/api/ai/extract` (doc → text, no storage); `app/api/ai/chat` extended (attachments, image vs vision-model selection, upload/day limit) with the text path unchanged.
+- **UI:** `ai-chat.tsx` paperclip attach (images as data URLs; docs via extract), attachment chips + thumbnails, follow-up "chat with file"; admin `ai-settings-form` multimodal card; flags threaded through `/ai` page, public layout, and the FAB.
+- Verified: `typecheck`, `lint`, `build` green (unpdf/mammoth bundle cleanly). New deps: `unpdf`, `mammoth`.
+
+### Follow-ups
+- Apply `3_ai_multimodal_modes` to Neon (additive enum values; also applied automatically by Vercel `vercel-build`).
+- Verify a real image reaches the Groq Llama-4 vision model in a live smoke test once `GROQ_API_KEY` is active.

@@ -43,7 +43,15 @@ export default async function PublicLayout({ children }: { children: React.React
       <main className="min-h-[60vh]">{children}</main>
       <SiteFooter />
       <BackToTop />
-      {aiEnabled && <AiChatFab availableModes={aiModes} />}
+      {aiEnabled && (
+        <AiChatFab
+          availableModes={aiModes}
+          imageEnabled={aiSettings.imageAnalysisEnabled}
+          documentEnabled={aiSettings.documentAnalysisEnabled}
+          maxImageMB={aiSettings.maxImageMB}
+          maxDocMB={aiSettings.maxDocMB}
+        />
+      )}
       <PageViewTracker />
     </>
   );

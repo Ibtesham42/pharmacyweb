@@ -425,6 +425,9 @@ enum AiMode {
   CAREER
   JOB_SEARCH
   DRUG_INFO
+  PLANT_ID
+  MEDICAL_DEVICE
+  STUDENT
 }
 
 enum AiRole {

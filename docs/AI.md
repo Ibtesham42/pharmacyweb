@@ -5,9 +5,11 @@ AI features can be added without refactoring. Follows the repo layering: `app/` 
 
 ## Status (Phase 2 — foundation shipped)
 
-**Built now:** Basic AI Chat (streaming) + Admin AI Settings + usage analytics + safety guardrails +
-knowledge modes. **Designed/deferred:** RAG, Resume Analyzer, Interview Prep, Job Match, AI Article
-Assistant, AI semantic search, multilingual, voice/STT/TTS, and other future modules.
+**Built now:** Basic AI Chat (streaming); **image + document understanding** (vision + OCR via a Groq
+Llama 4 model; PDF/DOCX/TXT text extraction); Admin AI Settings + usage analytics; safety guardrails;
+and 8 knowledge modes (incl. medicinal-plant, medical-device, pharmacy-student). **Designed/deferred:**
+RAG, Resume Analyzer, Interview Prep, Job Match, AI Article Assistant, AI semantic search, multilingual,
+voice/STT/TTS, camera medicine scanner, barcode scanner, drug-interaction checker.
 
 ## Stack & decisions
 
@@ -29,9 +31,10 @@ Assistant, AI semantic search, multilingual, voice/STT/TTS, and other future mod
 | Config + types + disclaimer + prompts list | `lib/ai/config.ts` |
 | Safety (system prompts, emergency detection, disclaimer) | `lib/ai/safety.ts` |
 | Groq provider (server-only) | `lib/ai/groq.ts` |
+| Document text extraction | `lib/ai/extract.ts` (unpdf / mammoth) |
 | Validation (Zod) | `lib/validation.ts` (`aiChatSchema`, `aiSettingsSchema`) |
 | Domain logic | `services/ai/{settings,chat,usage,conversations}.ts` |
-| API | `app/api/ai/chat/route.ts` (streaming), `app/api/ai/conversations/route.ts` |
+| API | `app/api/ai/chat/route.ts` (multimodal streaming), `app/api/ai/extract/route.ts` (doc text), `app/api/ai/conversations/route.ts` |
 | Admin UI | `app/admin/(panel)/ai/{page,actions}.tsx`, `components/admin/ai-settings-form.tsx` |
 | Public UI | `app/(public)/ai/page.tsx`, `components/public/{ai-chat,ai-chat-fab,ai-disclaimer}.tsx` |
 | DB | `prisma/schema.prisma` — `AiConversation`, `AiMessage`, `AiRequestLog`, `AiKnowledgeFile` + enums |
@@ -55,8 +58,21 @@ Assistant, AI semantic search, multilingual, voice/STT/TTS, and other future mod
 
 ## Knowledge modes
 
-`GENERAL`, `PHARMACY_EDU`, `CAREER`, `JOB_SEARCH`, `DRUG_INFO` — each independently enable/disable-able
-in Admin → AI Settings; each maps to a focused system prompt (`lib/ai/safety.ts`).
+`GENERAL`, `PHARMACY_EDU`, `CAREER`, `JOB_SEARCH`, `DRUG_INFO`, `PLANT_ID`, `MEDICAL_DEVICE`, `STUDENT`
+— each independently enable/disable-able in Admin → AI Settings; each maps to a focused system prompt
+(`lib/ai/safety.ts`).
+
+## Multimodal (image + document understanding)
+- **Images** (medicine/plant/device/prescription/lab-report photos): sent as base64 `ImagePart`s to a
+  Groq **vision** model (`visionModel`, default Llama 4 Scout) — handles OCR + analysis. The system
+  prompt enforces confidence indicators and "verify with an expert / official sources".
+- **Documents** (PDF/DOCX/TXT): text extracted server-side at `app/api/ai/extract` via `lib/ai/extract.ts`
+  (unpdf / mammoth), returned to the browser, and injected as context on each turn.
+- **Ephemeral & private:** nothing is stored — images stay in the browser and are re-sent on follow-ups;
+  document text is held client-side. No Cloudinary, no DB rows for uploads. Per-day upload cap +
+  per-type size limits + admin toggles (`imageAnalysisEnabled` / `documentAnalysisEnabled`).
+- Modes `PLANT_ID` / `MEDICAL_DEVICE` / `STUDENT` tailor the assistant for plant ID, device help, and
+  student study aids (summaries / MCQs / flashcards).
 
 ## Deferred design (build later, no refactor needed)
 

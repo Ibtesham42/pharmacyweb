@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Square, RotateCcw, Copy, Trash2, Sparkles } from "lucide-react";
+import { Send, Square, RotateCcw, Copy, Trash2, Sparkles, Paperclip, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AiDisclaimer } from "@/components/public/ai-disclaimer";
-import { AI_MODE_LABELS, SUGGESTED_PROMPTS, type AiModeKey } from "@/lib/ai/config";
+import {
+  AI_MODE_LABELS,
+  SUGGESTED_PROMPTS,
+  ACCEPTED_IMAGE_TYPES,
+  ACCEPTED_DOC_TYPES,
+  ACCEPT_AI_UPLOAD,
+  type AiModeKey,
+} from "@/lib/ai/config";
 import { cn } from "@/lib/utils";
 
-type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  images?: string[];
+  docName?: string;
+};
+
+type PendingImage = { dataUrl: string; mediaType: string };
 
 const CLIENT_KEY = "pc_ai_client";
 const HISTORY_KEY = "pc_ai_chat";
@@ -27,14 +42,31 @@ function newId() {
     : Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function readAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = () => reject(new Error("Could not read file"));
+    r.readAsDataURL(file);
+  });
+}
+
 export function AiChat({
   enabled,
   availableModes,
   compact = false,
+  imageEnabled = false,
+  documentEnabled = false,
+  maxImageMB = 8,
+  maxDocMB = 15,
 }: {
   enabled: boolean;
   availableModes: AiModeKey[];
   compact?: boolean;
+  imageEnabled?: boolean;
+  documentEnabled?: boolean;
+  maxImageMB?: number;
+  maxDocMB?: number;
 }) {
   const modes = availableModes.length ? availableModes : (["GENERAL"] as AiModeKey[]);
   const [clientId, setClientId] = useState("");
@@ -43,8 +75,19 @@ export function AiChat({
   const [mode, setMode] = useState<AiModeKey>(modes[0]);
   const [streaming, setStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<string | undefined>();
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
+  const [pendingDoc, setPendingDoc] = useState<{ name: string; text: string } | null>(null);
+  const [docBusy, setDocBusy] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const canAttach = imageEnabled || documentEnabled;
+  const acceptTypes = imageEnabled && documentEnabled
+    ? ACCEPT_AI_UPLOAD
+    : imageEnabled
+      ? ACCEPTED_IMAGE_TYPES.join(",")
+      : ACCEPTED_DOC_TYPES.join(",");
 
   // Initialise anonymous clientId + restore history.
   useEffect(() => {
@@ -72,12 +115,73 @@ export function AiChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist + autoscroll.
+  // Persist (text only — never store image data) + autoscroll.
   useEffect(() => {
     if (!clientId) return;
-    localStorage.setItem(HISTORY_KEY, JSON.stringify({ messages, mode, conversationId }));
+    const persistable = messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      docName: m.docName,
+    }));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify({ messages: persistable, mode, conversationId }));
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, mode, conversationId, clientId]);
+
+  async function handleFiles(files: FileList) {
+    for (const file of Array.from(files)) {
+      if (ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        if (!imageEnabled) {
+          toast.error("Image analysis is disabled.");
+          continue;
+        }
+        if (file.size > maxImageMB * 1024 * 1024) {
+          toast.error(`Image too large (max ${maxImageMB} MB).`);
+          continue;
+        }
+        if (pendingImages.length >= 3) {
+          toast.error("You can attach up to 3 images.");
+          break;
+        }
+        try {
+          const dataUrl = await readAsDataURL(file);
+          setPendingImages((prev) => [...prev, { dataUrl, mediaType: file.type }].slice(0, 3));
+        } catch {
+          toast.error("Could not read the image.");
+        }
+      } else if (ACCEPTED_DOC_TYPES.includes(file.type)) {
+        if (!documentEnabled) {
+          toast.error("Document analysis is disabled.");
+          continue;
+        }
+        if (file.size > maxDocMB * 1024 * 1024) {
+          toast.error(`File too large (max ${maxDocMB} MB).`);
+          continue;
+        }
+        setDocBusy(true);
+        try {
+          const fd = new FormData();
+          fd.append("file", file);
+          const res = await fetch("/api/ai/extract", { method: "POST", body: fd });
+          const data = (await res.json().catch(() => ({}))) as {
+            name?: string;
+            text?: string;
+            truncated?: boolean;
+            error?: string;
+          };
+          if (!res.ok || !data.text) throw new Error(data.error || "Could not read the document.");
+          setPendingDoc({ name: data.name || file.name, text: data.text });
+          if (data.truncated) toast.message("Large document — using the first part for context.");
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Could not read the document.");
+        } finally {
+          setDocBusy(false);
+        }
+      } else {
+        toast.error("Unsupported file type. Use an image, PDF, DOCX, or TXT.");
+      }
+    }
+  }
 
   async function run(history: ChatMessage[]) {
     if (!clientId) return;
@@ -86,6 +190,16 @@ export function AiChat({
     setStreaming(true);
     const controller = new AbortController();
     abortRef.current = controller;
+
+    const hasAttachments = pendingImages.length > 0 || !!pendingDoc;
+    const attachments = hasAttachments
+      ? {
+          images: pendingImages.length ? pendingImages : undefined,
+          docName: pendingDoc?.name,
+          docText: pendingDoc?.text,
+        }
+      : undefined;
+
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
@@ -96,6 +210,7 @@ export function AiChat({
           mode,
           conversationId,
           messages: history.map((m) => ({ role: m.role, content: m.content })),
+          attachments,
         }),
       });
       if (!res.ok) {
@@ -112,17 +227,13 @@ export function AiChat({
         const { value, done } = await reader.read();
         if (done) break;
         acc += decoder.decode(value, { stream: true });
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: acc } : m)),
-        );
+        setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: acc } : m)));
       }
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return;
       const message = err instanceof Error ? err.message : "Something went wrong.";
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId && !m.content ? { ...m, content: `⚠️ ${message}` } : m,
-        ),
+        prev.map((m) => (m.id === assistantId && !m.content ? { ...m, content: `⚠️ ${message}` } : m)),
       );
       toast.error(message);
     } finally {
@@ -133,8 +244,14 @@ export function AiChat({
 
   function send(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || streaming || !clientId) return;
-    const userMsg: ChatMessage = { id: newId(), role: "user", content: trimmed };
+    if ((!trimmed && pendingImages.length === 0 && !pendingDoc) || streaming || !clientId) return;
+    const userMsg: ChatMessage = {
+      id: newId(),
+      role: "user",
+      content: trimmed,
+      images: pendingImages.length ? pendingImages.map((i) => i.dataUrl) : undefined,
+      docName: pendingDoc?.name,
+    };
     setInput("");
     void run([...messages, userMsg]);
   }
@@ -156,6 +273,8 @@ export function AiChat({
     stop();
     setMessages([]);
     setConversationId(undefined);
+    setPendingImages([]);
+    setPendingDoc(null);
     if (clientId) {
       void fetch(`/api/ai/conversations?clientId=${encodeURIComponent(clientId)}`, {
         method: "DELETE",
@@ -179,13 +298,14 @@ export function AiChat({
   }
 
   const empty = messages.length === 0;
+  const canSend = (input.trim().length > 0 || pendingImages.length > 0 || !!pendingDoc) && !!clientId;
 
   return (
     <div className="flex h-full flex-col">
       {/* Mode selector + actions */}
       <div className="flex items-center justify-between gap-2 border-b pb-2">
         <Select value={mode} onValueChange={(v) => setMode(v as AiModeKey)}>
-          <SelectTrigger className="h-9 w-[200px] text-xs">
+          <SelectTrigger className="h-9 w-[210px] text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -201,7 +321,7 @@ export function AiChat({
           variant="ghost"
           size="sm"
           onClick={clearChat}
-          disabled={empty && !streaming}
+          disabled={empty && !streaming && pendingImages.length === 0 && !pendingDoc}
           aria-label="Clear chat"
         >
           <Trash2 className="h-4 w-4" /> Clear
@@ -216,8 +336,8 @@ export function AiChat({
         {empty ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Sparkles className="h-4 w-4 text-primary" /> Ask me about pharmacy, medicines, careers
-              or jobs
+              <Sparkles className="h-4 w-4 text-primary" /> Ask about pharmacy, medicines, careers or
+              jobs{canAttach ? " — or attach an image / document" : ""}
             </div>
             <div className="flex flex-wrap gap-2">
               {SUGGESTED_PROMPTS[mode].map((p) => (
@@ -234,16 +354,11 @@ export function AiChat({
           </div>
         ) : (
           messages.map((m, i) => (
-            <div
-              key={m.id}
-              className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
-            >
+            <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
               <div
                 className={cn(
                   "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground",
+                  m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                 )}
               >
                 {m.role === "assistant" ? (
@@ -279,7 +394,27 @@ export function AiChat({
                     </span>
                   )
                 ) : (
-                  <span className="whitespace-pre-wrap">{m.content}</span>
+                  <div className="space-y-2">
+                    {m.images && m.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {m.images.map((src, idx) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={idx}
+                            src={src}
+                            alt="attachment"
+                            className="h-24 w-24 rounded-lg object-cover"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {m.docName && (
+                      <div className="flex items-center gap-1.5 rounded-md bg-primary-foreground/20 px-2 py-1 text-xs">
+                        <FileText className="h-3.5 w-3.5" /> {m.docName}
+                      </div>
+                    )}
+                    {m.content && <span className="whitespace-pre-wrap">{m.content}</span>}
+                  </div>
                 )}
               </div>
             </div>
@@ -290,6 +425,40 @@ export function AiChat({
       {/* Composer */}
       <div className="border-t pt-2">
         <AiDisclaimer className="mb-2" />
+
+        {/* Active attachments */}
+        {(pendingImages.length > 0 || pendingDoc || docBusy) && (
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            {pendingImages.map((img, idx) => (
+              <div key={idx} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img.dataUrl} alt="" className="h-14 w-14 rounded-md object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setPendingImages((prev) => prev.filter((_, k) => k !== idx))}
+                  aria-label="Remove image"
+                  className="absolute -right-1.5 -top-1.5 rounded-full border bg-background p-0.5 shadow"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {docBusy && (
+              <span className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground">
+                <FileText className="h-3.5 w-3.5" /> Reading document…
+              </span>
+            )}
+            {pendingDoc && (
+              <span className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs">
+                <FileText className="h-3.5 w-3.5" /> {pendingDoc.name}
+                <button type="button" onClick={() => setPendingDoc(null)} aria-label="Remove document">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -297,6 +466,31 @@ export function AiChat({
           }}
           className="flex items-end gap-2"
         >
+          {canAttach && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={acceptTypes}
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) void handleFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={streaming || docBusy}
+                aria-label="Attach image or document"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+            </>
+          )}
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -315,7 +509,7 @@ export function AiChat({
               <Square className="h-4 w-4" />
             </Button>
           ) : (
-            <Button type="submit" size="icon" disabled={!input.trim() || !clientId} aria-label="Send">
+            <Button type="submit" size="icon" disabled={!canSend} aria-label="Send">
               <Send className="h-4 w-4" />
             </Button>
           )}

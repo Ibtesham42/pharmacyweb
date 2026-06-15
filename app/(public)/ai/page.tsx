@@ -30,7 +30,14 @@ export default async function AiPage() {
       </p>
       <div className="mt-4 rounded-xl border bg-card p-3 sm:p-4">
         <div className="h-[68vh]">
-          <AiChat enabled={enabled} availableModes={availableModes} />
+          <AiChat
+            enabled={enabled}
+            availableModes={availableModes}
+            imageEnabled={enabled && settings.imageAnalysisEnabled}
+            documentEnabled={enabled && settings.documentAnalysisEnabled}
+            maxImageMB={settings.maxImageMB}
+            maxDocMB={settings.maxDocMB}
+          />
         </div>
       </div>
     </div>

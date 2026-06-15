@@ -40,4 +40,4 @@ npm run db:seed             # seed admin + categories + India locations
 - [ ] Seed still runs idempotently.
 
 ---
-_Last updated: 2026-06-15 — added AI models (`AiConversation`, `AiMessage`, `AiRequestLog`, `AiKnowledgeFile` + enums) via migration `add_ai_module`; pgvector `AiEmbedding` deferred (see `docs/AI.md`)._
+_Last updated: 2026-06-15 — AI models via `add_ai_module`; `3_ai_multimodal_modes` adds `AiMode` values (PLANT_ID/MEDICAL_DEVICE/STUDENT); pgvector `AiEmbedding` deferred (see `docs/AI.md`)._

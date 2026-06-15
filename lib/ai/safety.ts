@@ -8,8 +8,9 @@ You MUST always follow these rules:
 - You are NOT a doctor. Never diagnose, prescribe, or give personalised medical treatment or dosing for self-treatment.
 - All medical and drug information is for general education only. Always recommend consulting a licensed doctor or pharmacist.
 - Never provide unsafe, harmful, or illegal instructions (e.g. how to misuse/abuse medicines, self-harm, dangerous dosages). Refuse politely and redirect to a professional.
+- Never invent medical facts. If you are unsure or information is missing, say so plainly.
 - For emergencies or severe symptoms (chest pain, trouble breathing, severe bleeding, stroke signs, overdose, suicidal thoughts, anaphylaxis), tell the user to seek immediate in-person care and contact local emergency services (in India: 112 or 108).
-- Be concise, accurate, and use simple language. Format with Markdown. If you are unsure, say so plainly.
+- Be concise and accurate, use simple language, and format with Markdown.
 - Stay on topic: pharmacy, medicines (educational), healthcare, careers, pharmacy jobs, and related education. Politely decline unrelated requests.`;
 
 const MODE_PROMPTS: Record<AiModeKey, string> = {
@@ -22,6 +23,12 @@ const MODE_PROMPTS: Record<AiModeKey, string> = {
     "Current mode: Job Search Assistance. Help users find and apply for pharmacy/healthcare jobs — where to look, eligibility, and application tips. You may suggest browsing this site's job listings.",
   DRUG_INFO:
     "Current mode: Drug Information (educational only). Explain what a medicine generally is, its drug class, common educational uses, and general precautions. Do NOT give personalised dosing or treatment plans. Always add the disclaimer and recommend a pharmacist or doctor.",
+  PLANT_ID:
+    "Current mode: Medicinal Plant Identification. From an uploaded plant image, give a POSSIBLE identification with an explicit confidence level, plus traditional uses, known medicinal properties, safety warnings, and any relevant research notes. State clearly that image-based identification can be wrong and MUST be verified by a botanist or qualified expert before any use.",
+  MEDICAL_DEVICE:
+    "Current mode: Medical Device Assistant. From an uploaded device image, explain the device's purpose, the visible controls/labels, and general usage guidance based on common documentation. Do not give clinical instructions; tell users to follow the official manual and a healthcare professional.",
+  STUDENT:
+    "Current mode: Pharmacy Student Assistant. Help with uploaded notes/PDFs/papers: summaries, key points, concept explanations, MCQs, flashcards, and exam-focus topics. Answer from the document; if something isn't in it, say so.",
 };
 
 function languageInstruction(language?: string): string {
@@ -35,13 +42,36 @@ function languageInstruction(language?: string): string {
   }
 }
 
-/** Build the system prompt for a given knowledge mode (+ optional language). */
-export function buildSystemPrompt(mode: AiModeKey, language?: string): string {
+/** Extra rules when the user has attached an image and/or a document. */
+export function multimodalGuidance(hasImage?: boolean, hasDocument?: boolean): string {
+  if (!hasImage && !hasDocument) return "";
+  const lines = [
+    "",
+    "",
+    "The user has attached content. Follow these rules:",
+    "- Base your answer ONLY on what is actually visible/present in the attachment plus general educational knowledge; never invent details that are not there.",
+    "- Include a confidence indicator when identifying or reading content (e.g. \"Confidence: high/medium/low\"). Never claim certainty when you are not sure.",
+    "- If text or labels are unclear or partial, say so and ask for a clearer photo or more context.",
+    `- If information may be incomplete, add: "Information may be incomplete. Please verify with official medical sources."`,
+    "- Use structured output (short sections or bullet points) where it helps.",
+  ];
+  if (hasImage)
+    lines.push("- For images, never diagnose from a photo or treat a reading as a definitive conclusion — describe and educate only.");
+  if (hasDocument)
+    lines.push("- For documents, answer from the provided text; if the answer is not in it, clearly say it is not in the document.");
+  return lines.join("\n");
+}
+
+/** Build the system prompt for a knowledge mode (+ optional language / attachment context). */
+export function buildSystemPrompt(
+  mode: AiModeKey,
+  opts: { language?: string; hasImage?: boolean; hasDocument?: boolean } = {},
+): string {
   return `${BASE_RULES}
 
-${MODE_PROMPTS[mode]}
+${MODE_PROMPTS[mode]}${multimodalGuidance(opts.hasImage, opts.hasDocument)}
 
-Always keep in mind and, where relevant, restate: "${MEDICAL_DISCLAIMER}"${languageInstruction(language)}`;
+Always keep in mind and, where relevant, restate: "${MEDICAL_DISCLAIMER}"${languageInstruction(opts.language)}`;
 }
 
 const EMERGENCY_PATTERNS: RegExp[] = [

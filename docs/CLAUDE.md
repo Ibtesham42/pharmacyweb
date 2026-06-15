@@ -28,4 +28,4 @@ Living documentation. Keep these in sync — they are part of "definition of don
 - [ ] All CLAUDE.md "Last updated" lines bumped.
 
 ---
-_Last updated: 2026-06-15 — added `AI.md`; docs synced after the AI module (Phase 2 foundation)._
+_Last updated: 2026-06-15 — docs synced after the AI multimodal extension (image/document understanding)._

@@ -163,32 +163,55 @@ export const aiChatMessageSchema = z.object({
   content: z.string().min(1, "Message is empty").max(8000, "Message is too long"),
 });
 
+export const aiAttachmentImageSchema = z.object({
+  dataUrl: z.string().startsWith("data:image/").max(15_000_000), // ~11MB base64
+  mediaType: z.string().max(100),
+});
+
 export const aiChatSchema = z.object({
   clientId: z.string().min(8).max(64),
   mode: z.nativeEnum(AiMode).default(AiMode.GENERAL),
   conversationId: z.string().cuid().optional(),
   language: z.enum(["en", "hi", "hinglish"]).optional(),
   messages: z.array(aiChatMessageSchema).min(1, "No messages").max(40),
+  attachments: z
+    .object({
+      images: z.array(aiAttachmentImageSchema).max(3).optional(),
+      docName: z.string().max(300).optional(),
+      docText: z.string().max(200_000).optional(),
+    })
+    .optional(),
 });
 export type AiChatInput = z.infer<typeof aiChatSchema>;
+
+const aiModesSchema = z.object({
+  GENERAL: z.boolean(),
+  PHARMACY_EDU: z.boolean(),
+  CAREER: z.boolean(),
+  JOB_SEARCH: z.boolean(),
+  DRUG_INFO: z.boolean(),
+  PLANT_ID: z.boolean(),
+  MEDICAL_DEVICE: z.boolean(),
+  STUDENT: z.boolean(),
+});
 
 export const aiSettingsSchema = z.object({
   enabled: z.boolean(),
   maintenanceMode: z.boolean(),
   model: z.string().min(1).max(80),
   fastModel: z.string().min(1).max(80),
+  visionModel: z.string().min(1).max(80),
+  imageAnalysisEnabled: z.boolean(),
+  documentAnalysisEnabled: z.boolean(),
   temperature: z.coerce.number().min(0).max(2),
   maxOutputTokens: z.coerce.number().int().min(128).max(8192),
   perMinuteLimit: z.coerce.number().int().min(1).max(120),
   dailyLimit: z.coerce.number().int().min(1).max(100_000),
   perUserDailyLimit: z.coerce.number().int().min(1).max(10_000),
-  modes: z.object({
-    GENERAL: z.boolean(),
-    PHARMACY_EDU: z.boolean(),
-    CAREER: z.boolean(),
-    JOB_SEARCH: z.boolean(),
-    DRUG_INFO: z.boolean(),
-  }),
+  maxUploadsPerDay: z.coerce.number().int().min(1).max(1_000),
+  maxImageMB: z.coerce.number().int().min(1).max(25),
+  maxDocMB: z.coerce.number().int().min(1).max(50),
+  modes: aiModesSchema,
 });
 export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;
 

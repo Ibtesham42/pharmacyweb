@@ -18,6 +18,7 @@ import {
 import { updateAiSettingsAction } from "@/app/admin/(panel)/ai/actions";
 import {
   AI_MODELS,
+  AI_VISION_MODELS,
   AI_MODE_LABELS,
   AI_MODE_KEYS,
   type AiSettings,
@@ -114,6 +115,44 @@ export function AiSettingsForm({
           <Num label="Per-minute limit (per IP)" value={s.perMinuteLimit} min={1} max={120} onChange={(v) => set("perMinuteLimit", v)} />
           <Num label="Per-user daily limit" value={s.perUserDailyLimit} min={1} max={10000} onChange={(v) => set("perUserDailyLimit", v)} />
           <Num label="Global daily limit" value={s.dailyLimit} min={1} max={100000} onChange={(v) => set("dailyLimit", v)} />
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-base">Multimodal (image &amp; document)</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <Row label="Image analysis" hint="Allow users to upload photos (medicine, plant, device, reports).">
+            <Switch
+              checked={s.imageAnalysisEnabled}
+              onCheckedChange={(v) => set("imageAnalysisEnabled", v)}
+            />
+          </Row>
+          <Row label="Document analysis" hint="Allow users to upload PDF / DOCX / TXT.">
+            <Switch
+              checked={s.documentAnalysisEnabled}
+              onCheckedChange={(v) => set("documentAnalysisEnabled", v)}
+            />
+          </Row>
+          <div className="space-y-1.5">
+            <Label>Vision model</Label>
+            <Select value={s.visionModel} onValueChange={(v) => set("visionModel", v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AI_VISION_MODELS.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Num label="Max uploads / user / day" value={s.maxUploadsPerDay} min={1} max={1000} onChange={(v) => set("maxUploadsPerDay", v)} />
+          <Num label="Max image size (MB)" value={s.maxImageMB} min={1} max={25} onChange={(v) => set("maxImageMB", v)} />
+          <Num label="Max document size (MB)" value={s.maxDocMB} min={1} max={50} onChange={(v) => set("maxDocMB", v)} />
         </CardContent>
       </Card>
 

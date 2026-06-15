@@ -35,6 +35,24 @@ export async function checkLimits(
   return { ok: true };
 }
 
+/** Per-clientId daily cap on file-upload (image/document) turns. */
+export async function checkUploadLimit(
+  clientId: string,
+  settings: AiSettings,
+): Promise<LimitCheck> {
+  const since = startOfTodayUTC();
+  const uploadsToday = await prisma.aiRequestLog.count({
+    where: { clientId, createdAt: { gte: since }, feature: { in: ["CHAT_IMAGE", "CHAT_DOC"] } },
+  });
+  if (uploadsToday >= settings.maxUploadsPerDay) {
+    return {
+      ok: false,
+      reason: "You've reached today's file-upload limit for the AI assistant. Please try again tomorrow.",
+    };
+  }
+  return { ok: true };
+}
+
 /** Append the latest user message, creating the conversation if needed. Returns conversationId. */
 export async function recordUserMessage(params: {
   conversationId?: string;
@@ -81,6 +99,7 @@ export async function recordAssistantResult(params: {
   latencyMs?: number;
   status: AiRequestStatus;
   errorMessage?: string;
+  feature?: string;
 }): Promise<void> {
   try {
     if (params.conversationId && params.content && params.status === AiRequestStatus.SUCCESS) {
@@ -99,7 +118,7 @@ export async function recordAssistantResult(params: {
       data: {
         clientId: params.clientId,
         conversationId: params.conversationId,
-        feature: "CHAT",
+        feature: params.feature ?? "CHAT",
         mode: params.mode,
         model: params.model,
         status: params.status,

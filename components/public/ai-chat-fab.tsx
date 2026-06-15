@@ -7,7 +7,19 @@ import { cn } from "@/lib/utils";
 import type { AiModeKey } from "@/lib/ai/config";
 
 /** Global floating AI chat button + panel (rendered only when AI is enabled). */
-export function AiChatFab({ availableModes }: { availableModes: AiModeKey[] }) {
+export function AiChatFab({
+  availableModes,
+  imageEnabled = false,
+  documentEnabled = false,
+  maxImageMB = 8,
+  maxDocMB = 15,
+}: {
+  availableModes: AiModeKey[];
+  imageEnabled?: boolean;
+  documentEnabled?: boolean;
+  maxImageMB?: number;
+  maxDocMB?: number;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,7 +41,15 @@ export function AiChatFab({ availableModes }: { availableModes: AiModeKey[] }) {
               </button>
             </div>
             <div className="min-h-0 flex-1 px-4 pb-3">
-              <AiChat enabled availableModes={availableModes} compact />
+              <AiChat
+                enabled
+                availableModes={availableModes}
+                compact
+                imageEnabled={imageEnabled}
+                documentEnabled={documentEnabled}
+                maxImageMB={maxImageMB}
+                maxDocMB={maxDocMB}
+              />
             </div>
           </div>
         </div>

@@ -17,7 +17,7 @@ _Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · �
 | 9 Testing | Unit tests (Vitest, 17 passing); build/typecheck/lint green. E2E (Playwright) scaffolded for later. | ☑ |
 | 10 Deployment | `vercel-build` runs migrations; CI workflow; README + deployment_skill runbook. Needs Neon+Cloudinary provisioning to go live. | ◐ |
 | 11 Documentation | CLAUDE.md ×5, SRS/ARCHITECTURE/DATABASE/ROADMAP/PROGRESS/CHANGELOG. | ☑ |
-| 12 AI (Phase 2) | Groq chat (streaming) + Admin AI Settings + safety guardrails + usage analytics; RAG/resume/interview/job-match/article-assistant designed (`docs/AI.md`). | ◐ |
+| 12 AI (Phase 2) | Groq chat (streaming) + **multimodal image/document understanding** + Admin AI Settings + safety guardrails + usage analytics; RAG/resume/interview/job-match/article-assistant designed (`docs/AI.md`). | ◐ |
 
 ### Remaining to go live (requires accounts/secrets)
 1. Provision Neon Postgres; set `DATABASE_URL` + `DIRECT_URL`.
