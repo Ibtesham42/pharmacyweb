@@ -1,7 +1,8 @@
 import { Heart, Bot, BookOpen, Briefcase, Rocket } from "lucide-react";
 import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { DonationForm } from "@/components/public/donation-form";
-import { getDonationSettings } from "@/services/donations";
+import { FeaturedSupporters } from "@/components/public/featured-supporters";
+import { getDonationSettings, getPublicFeaturedSupporters } from "@/services/donations";
 import { isRazorpayConfigured } from "@/lib/razorpay";
 import { DEFAULT_DONATION_SETTINGS } from "@/lib/donations/config";
 import { buildMetadata } from "@/lib/seo";
@@ -25,6 +26,13 @@ export default async function DonatePage({
   const settings = await safe(getDonationSettings(), DEFAULT_DONATION_SETTINGS);
   const razorpayAvailable = isRazorpayConfigured();
   const upiAvailable = Boolean(settings.upiId);
+  const supporters =
+    settings.featuredEnabled && settings.featuredOnDonatePage
+      ? await safe(
+          getPublicFeaturedSupporters({ limit: settings.featuredMaxShow, thresholds: settings.badgeThresholds }),
+          [],
+        )
+      : [];
 
   if (!settings.enabled || (!razorpayAvailable && !upiAvailable)) {
     return (
@@ -82,6 +90,12 @@ export default async function DonatePage({
           />
         </div>
       </div>
+
+      {supporters.length > 0 && (
+        <div className="mt-12 border-t pt-10">
+          <FeaturedSupporters supporters={supporters} />
+        </div>
+      )}
     </div>
   );
 }

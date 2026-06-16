@@ -101,3 +101,17 @@
 - Apply `4_add_donations` (auto via Vercel `vercel-build`); enable + configure in Admin → Donations.
 - Razorpay: set keys + webhook secret in Vercel and register the webhook URL; UPI works without them.
 - Future: recurring/memberships/crowdfunding (design in `docs/DONATIONS.md`); email receipts (add Resend).
+
+## 2026-06-16 — Featured Supporters system
+- Completed the supporters workflow behind the existing "You may feature me as a supporter" toggle (additive; donations/receipts unchanged).
+- **Consent → moderation:** `createDonation` now sets `featureStatus = PENDING` on consent (`NONE` otherwise). A supporter is **public only when an admin approves it AND the donation is PAID** — consent alone never publishes.
+- **DB:** migration `5_add_featured_supporters` adds enum `FeatureStatus` + `Donation.featureStatus/featuredMessage/featuredAt` + `@@index([featureStatus, featuredAt])`, and **backfills** existing `supporterConsent = true` rows to `PENDING`. Applied to Neon via `migrate deploy`; verified the one existing PAID opt-in landed in the queue (`featureStatus=PENDING`).
+- **Config/validation:** `lib/donations/config.ts` gains featured settings (`featuredEnabled`, `featuredMaxShow`, `featuredOnHomepage`, `featuredOnDonatePage`, `badgeThresholds`), supporter levels/badges + `supporterLevelFor()`, and a privacy-safe `PublicSupporter` type. `donationSettingsSchema` extended (thresholds must increase); new `featureStatusSchema`/`featuredMessageSchema`.
+- **services/donations:** `setFeatureStatus`, `setFeaturedMessage`, `listSupporters` (admin internal view), `getPublicFeaturedSupporters` (APPROVED+PAID → public shape; anonymous → "Anonymous Supporter"; never exposes email/phone/address/amount), `featuredAnalytics` (total, pending, by-month, most-active).
+- **Admin:** new **Supporters** tab in `/admin/donations` (`supporters-table.tsx`) — Approve/Reject/Feature/Remove + editable public thank-you message + analytics; pending count badged on the tab. Settings form gains the Featured-Supporters card (toggles, max-to-show, badge thresholds). Actions `setFeatureStatusAction`/`setFeaturedMessageAction` (requireAdmin + audit + revalidate `/`, `/donate`).
+- **Public:** `components/public/featured-supporters.tsx` rendered on the homepage and `/donate` (each gated by its placement switch + `featuredEnabled`); shows name/Anonymous, tiered badge, date, optional message only.
+- Verified: `typecheck`, `lint`, `build` all green; migration applied + backfill confirmed by query.
+
+### Follow-ups
+- Enable in Admin → Donations → Settings (Featured Supporters), then approve supporters in the Supporters tab.
+- Badge tiers derive from the per-donation amount; cumulative-tier / supporter profiles deferred.

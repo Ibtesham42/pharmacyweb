@@ -34,6 +34,13 @@ export function DonationSettingsForm({
     setS((p) => ({ ...p, [k]: v }));
   }
 
+  function setThreshold(tier: keyof DonationSettings["badgeThresholds"], rupees: number) {
+    setS((p) => ({
+      ...p,
+      badgeThresholds: { ...p.badgeThresholds, [tier]: Math.max(1, rupees) * 100 },
+    }));
+  }
+
   async function onQr(file: File) {
     setUploading(true);
     try {
@@ -155,6 +162,53 @@ export function DonationSettingsForm({
                 onChange={(e) => set("monthlyGoalPaise", Math.max(0, Number(e.target.value)) * 100)}
               />
             </Field>
+          </div>
+
+          {/* ── Featured Supporters ── */}
+          <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+            <p className="text-sm font-semibold">Featured Supporters</p>
+            <Row
+              label="Enable Featured Supporters section"
+              hint="Show approved supporters publicly. Donors must opt in and be approved by you."
+            >
+              <Switch checked={s.featuredEnabled} onCheckedChange={(v) => set("featuredEnabled", v)} />
+            </Row>
+            <Row label="Show on homepage">
+              <Switch checked={s.featuredOnHomepage} onCheckedChange={(v) => set("featuredOnHomepage", v)} />
+            </Row>
+            <Row label="Show on donation page">
+              <Switch checked={s.featuredOnDonatePage} onCheckedChange={(v) => set("featuredOnDonatePage", v)} />
+            </Row>
+            <Field label="Maximum supporters to show">
+              <Input
+                type="number"
+                min={1}
+                max={60}
+                value={s.featuredMaxShow}
+                onChange={(e) => set("featuredMaxShow", Math.max(1, Number(e.target.value)))}
+                className="max-w-[140px]"
+              />
+            </Field>
+
+            <div className="space-y-1.5">
+              <Label>Badge thresholds (₹ — minimum donation for each tier)</Label>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {(["bronze", "silver", "gold", "platinum"] as const).map((tier) => (
+                  <Field key={tier} label={tier[0].toUpperCase() + tier.slice(1)}>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={Math.round(s.badgeThresholds[tier] / 100)}
+                      onChange={(e) => setThreshold(tier, Number(e.target.value))}
+                    />
+                  </Field>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Donations below the Bronze threshold get the base “Supporter” badge. Thresholds must increase
+                across tiers.
+              </p>
+            </div>
           </div>
 
           <Button type="submit" disabled={busy}>

@@ -28,4 +28,4 @@ Living documentation. Keep these in sync — they are part of "definition of don
 - [ ] All CLAUDE.md "Last updated" lines bumped.
 
 ---
-_Last updated: 2026-06-16 — added `DONATIONS.md`; docs synced after the Donation & Support platform._
+_Last updated: 2026-06-16 — `DONATIONS.md` extended with the **Featured Supporters** system (migration `5_add_featured_supporters`); docs synced._

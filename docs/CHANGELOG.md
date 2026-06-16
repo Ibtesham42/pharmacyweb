@@ -21,6 +21,8 @@ All notable changes to this project are documented here (format: [Keep a Changel
 
 - **Donation & Support platform** (`/donate`): voluntary donations via **Razorpay** (auto-verified) and **UPI/QR** (manual, no gateway). Donor form (anonymous option), printable receipts with a Supporter badge, "Support Us" CTA in the footer + homepage, and an admin Donations dashboard (settings incl. UPI ID + QR upload, donor management with verify/CSV export, and analytics: total raised, donors, monthly, avg, conversion, by-source). Razorpay secrets stay server-side.
 
+- **Featured Supporters** (opt-in supporters wall): donors who tick "You may feature me as a supporter" enter an admin **review queue** — they only appear publicly once approved (consent alone never publishes). New admin **Supporters** tab to Approve / Reject / Feature / Remove, set an optional public thank-you message, and see featured-supporter analytics (total, pending, by-month, most-active). Public sections on the **homepage** and **donation page** show name + tiered badge (**Supporter / Bronze / Silver / Gold / Platinum**, by admin-configurable amount thresholds) + date + optional message — **never** email/phone/address/amount. **Anonymous** donors display as "Anonymous Supporter". Admin settings add enable, max-to-show, per-page placement, and badge thresholds. Existing opt-ins are migrated into the queue so they can be approved without a new donation.
+
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.
 

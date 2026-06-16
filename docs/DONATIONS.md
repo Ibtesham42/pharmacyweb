@@ -14,14 +14,35 @@ functionality changed). Supports **Razorpay** (auto-verified) and **UPI/QR manua
 ## Code map
 | Concern | Files |
 |---|---|
-| Config + types | `lib/donations/config.ts` (`DonationSettings`, defaults; in `SiteSetting` key `"donations"`) |
+| Config + types | `lib/donations/config.ts` (`DonationSettings`, defaults, supporter levels/badges, `PublicSupporter`; in `SiteSetting` key `"donations"`) |
 | Razorpay (server-only) | `lib/razorpay.ts` (order create, payment + webhook signature verify) |
-| Validation (Zod) | `lib/validation.ts` (`donationCreateSchema`, `donationManualSchema`, `donationVerifySchema`, `donationSettingsSchema`) |
-| Domain logic | `services/donations.ts` (create/markPaid/manual/stats/CSV/settings) |
+| Validation (Zod) | `lib/validation.ts` (`donationCreateSchema`, `donationManualSchema`, `donationVerifySchema`, `donationSettingsSchema`, `featureStatusSchema`, `featuredMessageSchema`) |
+| Domain logic | `services/donations.ts` (create/markPaid/manual/stats/CSV/settings + featured: `setFeatureStatus`, `setFeaturedMessage`, `listSupporters`, `getPublicFeaturedSupporters`, `featuredAnalytics`) |
 | API | `app/api/donations/{create,verify,manual}/route.ts`, `app/api/razorpay/webhook/route.ts` |
-| Public UI | `app/(public)/donate/page.tsx`, `donate/receipt/[id]/page.tsx`, `components/public/{donation-form,receipt-actions,donate-cta}.tsx` |
-| Admin | `app/admin/(panel)/donations/{page,actions,export}`, `components/admin/{donation-settings-form,donations-table}.tsx` |
-| DB | `prisma/schema.prisma` — `Donation` + `DonationStatus`/`DonationMethod` enums (migration `4_add_donations`) |
+| Public UI | `app/(public)/donate/page.tsx`, `donate/receipt/[id]/page.tsx`, `components/public/{donation-form,receipt-actions,donate-cta,featured-supporters}.tsx` |
+| Admin | `app/admin/(panel)/donations/{page,actions,export}`, `components/admin/{donation-settings-form,donations-table,supporters-table}.tsx` |
+| DB | `prisma/schema.prisma` — `Donation` + `DonationStatus`/`DonationMethod`/`FeatureStatus` enums (migrations `4_add_donations`, `5_add_featured_supporters`) |
+
+## Featured Supporters
+A privacy-safe public "supporters wall", gated by admin approval.
+- **Consent → moderation:** the donation form's "You may feature me as a supporter" toggle sets
+  `featureStatus = PENDING` (no consent → `NONE`). A supporter is **never** public on consent alone.
+- **Admin (Donations → Supporters tab):** review queue showing donor name, amount, date, anonymous
+  flag, consent, payment + feature status; actions **Approve / Reject / Feature / Remove**
+  (`setFeatureStatusAction`) and an editable public thank-you message (`setFeaturedMessageAction`).
+  Pending count is badged on the tab. Analytics: total featured, pending, featured-by-month,
+  most-active supporters.
+- **Public:** `getPublicFeaturedSupporters` returns only `APPROVED` **and** `PAID` rows as a
+  `PublicSupporter` (id, display name, level, message, date) — **no email/phone/address/amount**.
+  Anonymous donors render as **"Anonymous Supporter"**. Shown on homepage and `/donate` (each gated
+  by its own placement switch).
+- **Badge tiers:** Supporter / Bronze / Silver / Gold / Platinum, derived from the donation amount
+  against admin-configurable `badgeThresholds` (paise) via `supporterLevelFor()`.
+- **Settings (in `DonationSettings`):** `featuredEnabled`, `featuredMaxShow`, `featuredOnHomepage`,
+  `featuredOnDonatePage`, `badgeThresholds`.
+- **Data migration (`5_add_featured_supporters`):** adds `featureStatus`/`featuredMessage`/`featuredAt`
+  + index, and backfills existing opt-ins (`supporterConsent = true`) to `PENDING` so the admin can
+  approve them without a new donation.
 
 ## Flows
 - **Razorpay:** `/create` (PENDING + Razorpay order) → client Checkout → `/verify` (signature) → PAID →
@@ -37,8 +58,9 @@ min + cap; server-only status transitions; receipt-safe projection. Donor PII st
 
 ## Admin
 Admin → Donations: stat cards (total raised, donors, this month, avg, conversion), Donors table
-(verify/reject manual), Overview (top supporters, by-source), Settings (enable, UPI ID, QR upload,
-suggested/min amounts, goals, messages), CSV export.
+(verify/reject manual), **Supporters** tab (review/approve featured supporters + analytics), Overview
+(top supporters, by-source), Settings (enable, UPI ID, QR upload, suggested/min amounts, goals,
+messages, Featured Supporters toggles + badge thresholds), CSV export.
 
 ## Placement
 Footer "Support Us" link + homepage `DonateCta` (both gated by `enabled`), dedicated `/donate` page.

@@ -524,6 +524,15 @@ enum DonationMethod {
   UPI_MANUAL
 }
 
+// Featured-supporter moderation lifecycle. A donation only appears in the public
+// supporters wall once an admin moves it to APPROVED — consent alone is not enough.
+enum FeatureStatus {
+  NONE     // donor did not opt in
+  PENDING  // donor opted in; awaiting admin review
+  APPROVED // admin approved → eligible for public display (if PAID)
+  REJECTED // admin declined / removed from the featured list
+}
+
 model Donation {
   id                String         @id @default(cuid())
   receiptNo         String         @unique
@@ -539,6 +548,9 @@ model Donation {
   status            DonationStatus @default(PENDING)
   anonymous         Boolean        @default(false)
   supporterConsent  Boolean        @default(false)
+  featureStatus     FeatureStatus  @default(NONE)
+  featuredMessage   String?        @db.Text // admin-curated public thank-you note
+  featuredAt        DateTime? // when an admin approved/featured this supporter
   reason            String?
   feedback          String?        @db.Text
   source            String?
@@ -552,4 +564,5 @@ model Donation {
   @@index([status, createdAt])
   @@index([email])
   @@index([createdAt])
+  @@index([featureStatus, featuredAt])
 }

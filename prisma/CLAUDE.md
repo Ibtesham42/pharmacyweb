@@ -40,4 +40,4 @@ npm run db:seed             # seed admin + categories + India locations
 - [ ] Seed still runs idempotently.
 
 ---
-_Last updated: 2026-06-16 — AI models via `add_ai_module` + `3_ai_multimodal_modes`; `4_add_donations` adds the `Donation` model + enums (see `docs/DONATIONS.md`); pgvector `AiEmbedding` deferred._
+_Last updated: 2026-06-16 — AI models via `add_ai_module` + `3_ai_multimodal_modes`; `4_add_donations` adds the `Donation` model + enums; `5_add_featured_supporters` adds the `FeatureStatus` enum + featured columns/index and backfills existing opt-ins (see `docs/DONATIONS.md`); pgvector `AiEmbedding` deferred._

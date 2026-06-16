@@ -8,6 +8,7 @@ import {
   AdType,
   AiMode,
   DonationMethod,
+  FeatureStatus,
 } from "@prisma/client";
 
 // ─────────────────────────── Auth ───────────────────────────
@@ -266,6 +267,17 @@ export const donationVerifySchema = z.object({
   razorpaySignature: z.string().min(8).max(256),
 });
 
+const badgeThresholdsSchema = z
+  .object({
+    bronze: z.coerce.number().int().min(100).max(1_000_000_000),
+    silver: z.coerce.number().int().min(100).max(1_000_000_000),
+    gold: z.coerce.number().int().min(100).max(1_000_000_000),
+    platinum: z.coerce.number().int().min(100).max(1_000_000_000),
+  })
+  .refine((t) => t.bronze <= t.silver && t.silver <= t.gold && t.gold <= t.platinum, {
+    message: "Badge thresholds must increase: Bronze ≤ Silver ≤ Gold ≤ Platinum",
+  });
+
 export const donationSettingsSchema = z.object({
   enabled: z.boolean(),
   title: z.string().min(2).max(120),
@@ -278,8 +290,24 @@ export const donationSettingsSchema = z.object({
   suggestedAmounts: z.array(z.coerce.number().int().min(100).max(10_000_000)).max(12),
   goalPaise: z.coerce.number().int().min(0).max(1_000_000_000),
   monthlyGoalPaise: z.coerce.number().int().min(0).max(1_000_000_000),
+  featuredEnabled: z.boolean(),
+  featuredMaxShow: z.coerce.number().int().min(1).max(60),
+  featuredOnHomepage: z.boolean(),
+  featuredOnDonatePage: z.boolean(),
+  badgeThresholds: badgeThresholdsSchema,
 });
 export type DonationSettingsInput = z.infer<typeof donationSettingsSchema>;
+
+// Admin updates to a single supporter's feature state / public message.
+export const featureStatusSchema = z.object({
+  id: z.string().cuid(),
+  status: z.nativeEnum(FeatureStatus),
+});
+
+export const featuredMessageSchema = z.object({
+  id: z.string().cuid(),
+  message: z.string().max(280),
+});
 
 // ─────────────────────────── Search ───────────────────────────
 export const searchSchema = z.object({

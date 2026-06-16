@@ -1,10 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DonationStatus } from "@prisma/client";
+import { DonationStatus, FeatureStatus } from "@prisma/client";
 import { requireAdmin } from "@/lib/session";
-import { donationSettingsSchema } from "@/lib/validation";
-import { getDonationSettings, setDonationSettings, adminSetStatus } from "@/services/donations";
+import { donationSettingsSchema, featureStatusSchema, featuredMessageSchema } from "@/lib/validation";
+import {
+  getDonationSettings,
+  setDonationSettings,
+  adminSetStatus,
+  setFeatureStatus,
+  setFeaturedMessage,
+} from "@/services/donations";
 import { writeAudit } from "@/lib/audit";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -49,6 +55,50 @@ export async function setDonationStatusAction(id: string, status: DonationStatus
       after: { status },
     });
     revalidatePath("/admin/donations");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: msg(e) };
+  }
+}
+
+export async function setFeatureStatusAction(id: string, status: FeatureStatus): Promise<Result> {
+  try {
+    const user = await requireAdmin();
+    const parsed = featureStatusSchema.safeParse({ id, status });
+    if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" };
+    await setFeatureStatus(parsed.data.id, parsed.data.status);
+    await writeAudit({
+      actorId: user.id,
+      action: "UPDATE",
+      entityType: "Donation",
+      entityId: id,
+      after: { featureStatus: status },
+    });
+    revalidatePath("/admin/donations");
+    revalidatePath("/donate");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: msg(e) };
+  }
+}
+
+export async function setFeaturedMessageAction(id: string, message: string): Promise<Result> {
+  try {
+    const user = await requireAdmin();
+    const parsed = featuredMessageSchema.safeParse({ id, message });
+    if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" };
+    await setFeaturedMessage(parsed.data.id, parsed.data.message);
+    await writeAudit({
+      actorId: user.id,
+      action: "UPDATE",
+      entityType: "Donation",
+      entityId: id,
+      after: { featuredMessage: parsed.data.message },
+    });
+    revalidatePath("/admin/donations");
+    revalidatePath("/donate");
+    revalidatePath("/");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: msg(e) };

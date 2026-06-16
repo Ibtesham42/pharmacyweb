@@ -3,9 +3,10 @@ import { ArrowRight, Briefcase, Newspaper, BookOpen, Tag } from "lucide-react";
 import { getFeatured, getLatest } from "@/services/posts";
 import { listPublicCategories } from "@/services/categories";
 import { getHomepage } from "@/services/settings";
-import { getDonationSettings } from "@/services/donations";
+import { getDonationSettings, getPublicFeaturedSupporters } from "@/services/donations";
 import { DEFAULT_DONATION_SETTINGS } from "@/lib/donations/config";
 import { DonateCta } from "@/components/public/donate-cta";
+import { FeaturedSupporters } from "@/components/public/featured-supporters";
 import { SearchBar } from "@/components/public/search-bar";
 import { PostCard } from "@/components/public/post-card";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +59,16 @@ export default async function HomePage() {
     safe(listPublicCategories(), []),
     safe(getDonationSettings(), DEFAULT_DONATION_SETTINGS),
   ]);
+  const supporters =
+    donations.featuredEnabled && donations.featuredOnHomepage
+      ? await safe(
+          getPublicFeaturedSupporters({
+            limit: donations.featuredMaxShow,
+            thresholds: donations.badgeThresholds,
+          }),
+          [],
+        )
+      : [];
 
   return (
     <>
@@ -115,6 +126,12 @@ export default async function HomePage() {
         {donations.enabled && (
           <section className="mb-12">
             <DonateCta source="homepage" />
+          </section>
+        )}
+
+        {supporters.length > 0 && (
+          <section className="mb-12">
+            <FeaturedSupporters supporters={supporters} />
           </section>
         )}
 
