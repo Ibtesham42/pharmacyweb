@@ -200,3 +200,43 @@ export function articleJsonLd(p: ArticleLdInput): JsonLd {
     mainEntityOfPage: absoluteUrl(`/${p.section}/${p.slug}`),
   };
 }
+
+interface ResourceLdInput {
+  title: string;
+  description: string;
+  slug: string;
+  image?: string | null;
+  pricePaise: number;
+  isFree: boolean;
+  ratingValue?: number;
+  ratingCount?: number;
+}
+
+/** schema.org Product for a marketplace resource, with offers + rating. */
+export function resourceJsonLd(p: ResourceLdInput): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.title,
+    description: p.description,
+    image: p.image ? [p.image] : undefined,
+    url: absoluteUrl(`/store/${p.slug}`),
+    brand: { "@type": "Brand", name: siteConfig.name },
+    offers: {
+      "@type": "Offer",
+      price: (p.pricePaise / 100).toFixed(2),
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
+      url: absoluteUrl(`/store/${p.slug}`),
+    },
+    ...(p.ratingCount && p.ratingCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: p.ratingValue,
+            reviewCount: p.ratingCount,
+          },
+        }
+      : {}),
+  };
+}

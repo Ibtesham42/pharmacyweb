@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/jobs",
     "/articles",
     "/news",
+    "/store",
     "/categories",
     "/search",
     "/about",
@@ -25,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === "" ? 1 : 0.7,
   }));
 
-  const [posts, categories] = await Promise.all([
+  const [posts, categories, resources] = await Promise.all([
     prisma.post.findMany({
       where: { deletedAt: null, status: "PUBLISHED" },
       select: { type: true, slug: true, updatedAt: true },
@@ -33,7 +34,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 5000,
     }),
     prisma.category.findMany({ select: { slug: true } }),
-  ]).catch(() => [[], []] as const);
+    prisma.resource.findMany({
+      where: { deletedAt: null, status: "PUBLISHED" },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+      take: 5000,
+    }),
+  ]).catch(() => [[], [], []] as const);
 
   const postRoutes: MetadataRoute.Sitemap = posts.map((p) => ({
     url: absoluteUrl(postPath(p.type, p.slug)),
@@ -48,5 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...postRoutes, ...categoryRoutes];
+  const resourceRoutes: MetadataRoute.Sitemap = resources.map((r) => ({
+    url: absoluteUrl(`/store/${r.slug}`),
+    lastModified: r.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...postRoutes, ...categoryRoutes, ...resourceRoutes];
 }

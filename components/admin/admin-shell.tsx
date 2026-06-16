@@ -14,6 +14,7 @@ import {
   Mail,
   Bot,
   Heart,
+  Package,
   Settings,
   UserCog,
   LogOut,
@@ -36,6 +37,7 @@ const NAV = [
   { href: "/admin/messages", label: "Messages", icon: Mail },
   { href: "/admin/ai", label: "AI Settings", icon: Bot },
   { href: "/admin/donations", label: "Donations", icon: Heart },
+  { href: "/admin/resources", label: "Resources", icon: Package },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/account", label: "Account", icon: UserCog },
 ];

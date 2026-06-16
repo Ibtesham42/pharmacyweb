@@ -95,6 +95,43 @@ enum EventType {
   OUTBOUND_CLICK
 }
 
+// ─────────────────── Digital Resources Marketplace ───────────────────
+enum ResourceType {
+  PHARMACY_NOTES
+  STUDY_GUIDE
+  SYLLABUS
+  PYQ // previous year question papers
+  GPAT_MATERIAL
+  NIPER_MATERIAL
+  DRUG_INSPECTOR_MATERIAL
+  RESEARCH_PAPER
+  THESIS
+  PRESENTATION
+  EBOOK
+  PDF_COLLECTION
+  MOCK_TEST
+  QUESTION_BANK
+  STUDY_PACKAGE
+}
+
+enum ResourceAccess {
+  FREE
+  PAID
+  PREMIUM // members-only; gating designed for a future membership phase
+}
+
+enum ResourceStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // ─────────────────────────── Core ───────────────────────────
 model User {
   id           String    @id @default(cuid())
@@ -184,10 +221,11 @@ model Category {
 }
 
 model Tag {
-  id    String    @id @default(cuid())
-  name  String
-  slug  String    @unique
-  posts PostTag[]
+  id        String        @id @default(cuid())
+  name      String
+  slug      String        @unique
+  posts     PostTag[]
+  resources ResourceTag[]
 }
 
 model PostTag {
@@ -226,10 +264,11 @@ model Media {
   uploadedById String?
   createdAt    DateTime  @default(now())
 
-  uploadedBy       User?       @relation(fields: [uploadedById], references: [id])
-  postsFeatured    Post[]      @relation("PostFeaturedImage")
-  inGalleries      PostMedia[]
-  productDownloads Product[]   @relation("ProductDownloadFile")
+  uploadedBy        User?       @relation(fields: [uploadedById], references: [id])
+  postsFeatured     Post[]      @relation("PostFeaturedImage")
+  inGalleries       PostMedia[]
+  productDownloads  Product[]   @relation("ProductDownloadFile")
+  resourceDownloads Resource[]  @relation("ResourceDownloadFile")
 
   @@index([type])
 }
@@ -565,4 +604,197 @@ model Donation {
   @@index([email])
   @@index([createdAt])
   @@index([featureStatus, featuredAt])
+}
+
+// ─────────────────── Digital Resources Marketplace ───────────────────
+// Downloadable resources (free/paid). Paid files are stored as Cloudinary
+// "authenticated" assets and only served via an entitlement-checked, expiring
+// signed URL — see lib/cloudinary.ts + app/api/resources/[slug]/download.
+// Marketplace config lives in SiteSetting key "marketplace" (JSON).
+
+model ResourceCategory {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  parentId    String?
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  parent    ResourceCategory?  @relation("ResourceCategoryTree", fields: [parentId], references: [id])
+  children  ResourceCategory[] @relation("ResourceCategoryTree")
+  resources Resource[]
+}
+
+model Resource {
+  id          String         @id @default(cuid())
+  title       String
+  slug        String         @unique
+  type        ResourceType
+  categoryId  String?
+  description String         @db.Text
+  excerpt     String?
+  author      String?
+  access      ResourceAccess @default(FREE)
+  pricePaise  Int            @default(0)
+  status      ResourceStatus @default(DRAFT)
+
+  // Protected download file (Cloudinary authenticated asset) + metadata
+  fileId        String?
+  fileType      String? // e.g. "PDF", "ZIP"
+  fileSizeBytes Int?
+  pageCount     Int?
+  previewImages String[] // public Cloudinary URLs
+
+  // Engagement + rating aggregates (denormalized)
+  downloadCount Int @default(0)
+  viewCount     Int @default(0)
+  ratingSum     Int @default(0)
+  ratingCount   Int @default(0)
+
+  // Inline SEO (avoids coupling to SeoMeta which is Post-only)
+  metaTitle       String?
+  metaDescription String?
+  ogImageUrl      String?
+
+  // Thesis / research (nullable; DOI-ready for a future library phase)
+  abstract      String? @db.Text
+  citation      String? @db.Text
+  doi           String?
+  publishedYear Int?
+
+  featured    Boolean   @default(false)
+  publishedAt DateTime?
+  deletedAt   DateTime? // soft delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  category  ResourceCategory?  @relation(fields: [categoryId], references: [id])
+  file      Media?             @relation("ResourceDownloadFile", fields: [fileId], references: [id])
+  tags      ResourceTag[]
+  purchases ResourcePurchase[]
+  reviews   ResourceReview[]
+  bookmarks ResourceBookmark[]
+  downloads ResourceDownload[]
+
+  @@index([type, status])
+  @@index([access, status])
+  @@index([categoryId])
+  @@index([status, publishedAt])
+  @@index([featured])
+}
+
+model ResourceTag {
+  resourceId String
+  tagId      String
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([resourceId, tagId])
+  @@index([tagId])
+}
+
+// Passwordless public buyer account (separate from admin User).
+model Buyer {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified Boolean   @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  purchases ResourcePurchase[]
+  reviews   ResourceReview[]
+  bookmarks ResourceBookmark[]
+  downloads ResourceDownload[]
+}
+
+// Magic-link / OTP tokens. Only the hash is stored.
+model BuyerAuthToken {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String    @unique
+  code      String? // optional 6-digit OTP (also hashed)
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+// Single-resource purchase (mirrors Donation; reuses lib/razorpay.ts).
+model ResourcePurchase {
+  id                String         @id @default(cuid())
+  receiptNo         String         @unique
+  buyerId           String?
+  resourceId        String
+  email             String
+  name              String?
+  amountPaise       Int
+  currency          String         @default("INR")
+  method            DonationMethod
+  status            OrderStatus    @default(PENDING)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  transactionRef    String?
+  ip                String?
+  createdAt         DateTime       @default(now())
+  paidAt            DateTime?
+
+  buyer    Buyer?   @relation(fields: [buyerId], references: [id])
+  resource Resource @relation(fields: [resourceId], references: [id])
+
+  @@index([buyerId])
+  @@index([resourceId])
+  @@index([status])
+  @@index([email])
+  @@index([razorpayOrderId])
+}
+
+model ResourceReview {
+  id         String       @id @default(cuid())
+  resourceId String
+  buyerId    String
+  rating     Int // 1..5
+  title      String?
+  body       String?      @db.Text
+  status     ReviewStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  buyer    Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, buyerId])
+  @@index([resourceId, status])
+}
+
+model ResourceBookmark {
+  id         String   @id @default(cuid())
+  buyerId    String
+  resourceId String
+  createdAt  DateTime @default(now())
+
+  buyer    Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([buyerId, resourceId])
+  @@index([resourceId])
+}
+
+model ResourceDownload {
+  id         String   @id @default(cuid())
+  resourceId String
+  buyerId    String?
+  email      String?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  buyer    Buyer?   @relation(fields: [buyerId], references: [id])
+
+  @@index([resourceId, createdAt])
+  @@index([buyerId])
 }

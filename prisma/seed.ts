@@ -49,6 +49,36 @@ async function seedCategories() {
   return map;
 }
 
+const RESOURCE_CATEGORIES = [
+  "B.Pharm",
+  "D.Pharm",
+  "M.Pharm",
+  "Pharm D",
+  "GPAT",
+  "NIPER",
+  "Drug Inspector",
+  "Pharmacology",
+  "Pharmaceutics",
+  "Pharmaceutical Chemistry",
+  "Pharmacognosy",
+  "Clinical Pharmacy",
+  "Hospital Pharmacy",
+  "Research",
+];
+
+async function seedResourceCategories() {
+  let i = 0;
+  for (const name of RESOURCE_CATEGORIES) {
+    await prisma.resourceCategory.upsert({
+      where: { slug: slug(name) },
+      update: { name, sortOrder: i },
+      create: { name, slug: slug(name), sortOrder: i },
+    });
+    i += 1;
+  }
+  console.log(`✓ Resource categories: ${RESOURCE_CATEGORIES.length}`);
+}
+
 async function seedSettings() {
   const locations = JSON.parse(
     readFileSync(join(process.cwd(), "data", "india-states-cities.json"), "utf-8"),
@@ -126,7 +156,26 @@ async function seedSettings() {
       },
     },
   });
-  console.log(`✓ Site settings: ${settings.length + 2}`);
+  // Marketplace settings — create-only so re-seeding never clobbers admin values.
+  await prisma.siteSetting.upsert({
+    where: { key: "marketplace" },
+    update: {},
+    create: {
+      key: "marketplace",
+      value: {
+        enabled: false,
+        currency: "INR",
+        upiId: "",
+        qrImageUrl: "",
+        featuredCount: 8,
+        reviewsRequireModeration: true,
+        upiFallbackEnabled: true,
+        premiumComingSoon: true,
+        freeRequiresAccount: false,
+      },
+    },
+  });
+  console.log(`✓ Site settings: ${settings.length + 3}`);
 }
 
 async function seedAds() {
@@ -277,6 +326,7 @@ async function main() {
   console.log("Seeding database…");
   const admin = await seedAdmin();
   const cats = await seedCategories();
+  await seedResourceCategories();
   await seedSettings();
   await seedAds();
   await seedSamplePosts(admin.id, cats);

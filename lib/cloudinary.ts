@@ -72,4 +72,58 @@ export async function deleteAsset(publicId: string, resourceType = "image") {
   return cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 }
 
+/**
+ * Upload a PROTECTED file (Cloudinary "authenticated" delivery type). The asset
+ * is NOT publicly reachable — it can only be served via a freshly-signed,
+ * time-limited URL from `signedDownloadUrl()`. Used for paid resource files.
+ */
+export function uploadProtected(
+  buffer: Buffer,
+  options: { filename?: string } = {},
+): Promise<{
+  secure_url: string;
+  public_id: string;
+  bytes: number;
+  format?: string;
+  resource_type: string;
+}> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: `${CLOUDINARY_FOLDER}/protected`,
+        resource_type: "raw",
+        type: "authenticated",
+        use_filename: true,
+        unique_filename: true,
+        filename_override: options.filename,
+      },
+      (error, result) => {
+        if (error || !result) return reject(error);
+        resolve(result as never);
+      },
+    );
+    stream.end(buffer);
+  });
+}
+
+/**
+ * Generate a short-lived, signed delivery URL for an authenticated asset.
+ * The signature embeds `expires_at`, so the link stops working after the TTL.
+ * `flags: attachment` forces a download rather than inline view.
+ */
+export function signedDownloadUrl(
+  publicId: string,
+  options: { expiresInSec?: number; resourceType?: "raw" | "image"; download?: boolean } = {},
+): string {
+  const expiresAt = Math.floor(Date.now() / 1000) + (options.expiresInSec ?? 60);
+  return cloudinary.url(publicId, {
+    resource_type: options.resourceType ?? "raw",
+    type: "authenticated",
+    secure: true,
+    sign_url: true,
+    expires_at: expiresAt,
+    ...(options.download !== false ? { flags: "attachment" } : {}),
+  });
+}
+
 export { cloudinary };

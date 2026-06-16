@@ -115,3 +115,20 @@
 ### Follow-ups
 - Enable in Admin → Donations → Settings (Featured Supporters), then approve supporters in the Supporters tab.
 - Badge tiers derive from the per-donation amount; cumulative-tier / supporter profiles deferred.
+
+## 2026-06-16 — Digital Resources Marketplace (Phase 1 MVP)
+- Built a full marketplace for downloadable resources (free + paid) — additive; existing features unchanged. Plan: `docs/MARKETPLACE.md`. Decisions captured after a 3-agent architecture audit + user sign-off on 4 questions (phased MVP, magic-link buyer accounts, token+signed-URL delivery, Razorpay-instant + UPI fallback).
+- **DB:** migration `6_add_marketplace` (additive) adds enums `ResourceType/ResourceAccess/ResourceStatus/ReviewStatus` and models `ResourceCategory`, `Resource`, `ResourceTag` (reuses `Tag`), `Buyer`, `BuyerAuthToken` (hash-only), `ResourcePurchase` (mirrors `Donation`), `ResourceReview`, `ResourceBookmark`, `ResourceDownload`. Seed adds 14 starter categories + create-only `marketplace` settings. **Migration written + client generated; apply to Neon is the one pending manual step (classifier blocks live-DB writes) — run `npm run db:deploy && npm run db:seed`.**
+- **Reused (no new deps):** `lib/razorpay.ts` (purchases), Cloudinary (extended with `uploadProtected` + `signedDownloadUrl`), settings/slug/format/validation/ratelimit/audit, admin CRUD + public SEO patterns.
+- **Buyer identity:** passwordless magic-link/OTP — `lib/mailer.ts` (Resend REST + dev console fallback), `lib/buyer-session.ts` (HMAC httpOnly cookie; admin auth/middleware untouched), `services/buyers.ts`, `app/api/buyers/*`, `/account/login` + `/account` dashboard.
+- **Secure delivery:** paid files = Cloudinary authenticated assets; `app/api/resources/[slug]/download` verifies entitlement (session or `lib/download-token` HMAC) → 302 to a ~90s signed URL. Protected upload via `app/api/admin/resources/upload`.
+- **Payments:** `services/resource-purchases.ts` + `app/api/resources/[slug]/purchase`, `/purchase/verify`, `/purchase/manual`, `app/api/razorpay/resource-webhook` (separate from donations). Emailed receipt + re-download link; `/store/receipt/[id]`.
+- **Reviews/bookmarks:** `services/resource-reviews.ts` (verified-buyer gate, moderation, rating aggregate) + `services/resource-bookmarks.ts`; routes + `review-form`/`bookmark-button`/`rating-stars`.
+- **Admin:** Resources nav + pages (list/new/[id]/categories/purchases/reviews/settings) with `actions.ts`; components `resource-form` (protected file + preview images + tags + SEO + thesis fields), row-actions, categories manager, purchases table (UPI verify), reviews moderation, marketplace settings, analytics.
+- **Public:** `/store` storefront (filters, featured, grid) + `/store/[slug]` detail (SEO + `resourceJsonLd` + reviews + buy/download), `loading.tsx`; "Store" added to nav + sitemap (incl. resource URLs).
+- Verified: `typecheck`, `lint`, `build` all green (new routes compiled). New env: `RESEND_API_KEY`, `MARKETPLACE_FROM_EMAIL`, `BUYER_AUTH_SECRET`.
+
+### Follow-ups
+- **Apply migration `6_add_marketplace` to Neon + seed** (pending — needs explicit go-ahead): `npm run db:deploy && npm run db:seed`. Vercel `vercel-build` applies it automatically on deploy.
+- Enable in Admin → Resources → Settings; set `RESEND_API_KEY` + `BUYER_AUTH_SECRET` for production magic-link/receipts; register the `/api/razorpay/resource-webhook` URL.
+- Deferred (designed): AI resource tools, thesis library, exam-prep store + bundles, memberships, course marketplace (see `docs/MARKETPLACE.md`).

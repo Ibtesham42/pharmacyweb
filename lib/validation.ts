@@ -9,6 +9,10 @@ import {
   AiMode,
   DonationMethod,
   FeatureStatus,
+  ResourceType,
+  ResourceAccess,
+  ResourceStatus,
+  ReviewStatus,
 } from "@prisma/client";
 
 // ─────────────────────────── Auth ───────────────────────────
@@ -308,6 +312,106 @@ export const featuredMessageSchema = z.object({
   id: z.string().cuid(),
   message: z.string().max(280),
 });
+
+// ─────────────────────── Marketplace ───────────────────────
+const optStr = (max: number) => z.string().max(max).optional().or(z.literal(""));
+
+export const resourceCategorySchema = z.object({
+  name: z.string().min(2, "Name is too short").max(80),
+  slug: z.string().max(80).regex(/^[a-z0-9-]*$/i).optional().or(z.literal("")),
+  description: optStr(300),
+  parentId: z.string().cuid().optional().or(z.literal("")),
+  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
+});
+
+export const resourceSchema = z
+  .object({
+    title: z.string().min(3, "Title is too short").max(200),
+    slug: z.string().max(200).regex(/^[a-z0-9-]*$/i).optional().or(z.literal("")),
+    type: z.nativeEnum(ResourceType),
+    categoryId: z.string().cuid().optional().or(z.literal("")),
+    description: z.string().min(10, "Add a description").max(20_000),
+    excerpt: optStr(300),
+    author: optStr(120),
+    access: z.nativeEnum(ResourceAccess).default(ResourceAccess.FREE),
+    pricePaise: z.coerce.number().int().min(0).max(5_000_000).default(0),
+    status: z.nativeEnum(ResourceStatus).default(ResourceStatus.DRAFT),
+    fileId: z.string().cuid().optional().or(z.literal("")),
+    fileType: optStr(20),
+    fileSizeBytes: z.coerce.number().int().min(0).optional(),
+    pageCount: z.coerce.number().int().min(0).max(100_000).optional(),
+    previewImages: z.array(z.string().url()).max(8).default([]),
+    tags: z.array(z.string().min(1).max(40)).max(20).default([]),
+    metaTitle: optStr(120),
+    metaDescription: optStr(300),
+    ogImageUrl: z.string().url().optional().or(z.literal("")),
+    abstract: optStr(5000),
+    citation: optStr(1000),
+    doi: optStr(120),
+    publishedYear: z.coerce.number().int().min(1900).max(2100).optional(),
+    featured: z.boolean().default(false),
+  })
+  .refine((d) => d.access !== ResourceAccess.PAID || d.pricePaise >= 100, {
+    message: "Paid resources need a price of at least ₹1",
+    path: ["pricePaise"],
+  });
+export type ResourceInput = z.infer<typeof resourceSchema>;
+
+export const purchaseCreateSchema = z.object({
+  name: z.string().min(2, "Please enter your name").max(120),
+  email: z.string().email("Enter a valid email"),
+  method: z.nativeEnum(DonationMethod),
+  website: z.string().max(0).optional(), // honeypot
+});
+
+export const purchaseVerifySchema = z.object({
+  purchaseId: z.string().cuid(),
+  razorpayPaymentId: z.string().min(4).max(120),
+  razorpaySignature: z.string().min(8).max(256),
+});
+
+export const purchaseManualSchema = z.object({
+  purchaseId: z.string().cuid(),
+  transactionRef: z.string().min(4, "Enter the UPI reference / UTR").max(60),
+});
+
+export const reviewSchema = z.object({
+  resourceId: z.string().cuid(),
+  rating: z.coerce.number().int().min(1).max(5),
+  title: optStr(120),
+  body: optStr(2000),
+});
+
+export const reviewModerateSchema = z.object({
+  id: z.string().cuid(),
+  status: z.nativeEnum(ReviewStatus),
+});
+
+export const buyerRequestLinkSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  name: optStr(120),
+  next: optStr(300),
+  website: z.string().max(0).optional(), // honeypot
+});
+
+export const buyerVerifySchema = z.object({
+  token: z.string().min(10).max(200).optional(),
+  email: z.string().email().optional(),
+  code: z.string().min(4).max(8).optional(),
+});
+
+export const marketplaceSettingsSchema = z.object({
+  enabled: z.boolean(),
+  currency: z.string().min(3).max(3).default("INR"),
+  upiId: optStr(120),
+  qrImageUrl: z.string().url().optional().or(z.literal("")),
+  featuredCount: z.coerce.number().int().min(1).max(60),
+  reviewsRequireModeration: z.boolean(),
+  upiFallbackEnabled: z.boolean(),
+  premiumComingSoon: z.boolean(),
+  freeRequiresAccount: z.boolean(),
+});
+export type MarketplaceSettingsInput = z.infer<typeof marketplaceSettingsSchema>;
 
 // ─────────────────────────── Search ───────────────────────────
 export const searchSchema = z.object({
