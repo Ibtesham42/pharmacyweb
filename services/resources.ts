@@ -363,15 +363,33 @@ export async function hasEntitlement(opts: {
 }): Promise<boolean> {
   if (opts.access === ResourceAccess.FREE) return true;
   if (opts.access === ResourceAccess.PREMIUM) return false;
-  const ors: Prisma.ResourcePurchaseWhereInput[] = [];
+  // Buyer-identity clauses shared by both purchase tables (id or email).
+  const ors: { buyerId?: string; email?: string }[] = [];
   if (opts.buyerId) ors.push({ buyerId: opts.buyerId });
   if (opts.email) ors.push({ email: opts.email.toLowerCase() });
   if (ors.length === 0) return false;
+  // Direct single-resource purchase…
   const paid = await prisma.resourcePurchase.findFirst({
     where: { resourceId: opts.resourceId, status: "PAID", OR: ors },
     select: { id: true },
   });
-  return Boolean(paid);
+  if (paid) return true;
+  // …or a PAID bundle that contains this resource.
+  const bundled = await prisma.bundlePurchase.findFirst({
+    where: { status: "PAID", OR: ors, bundle: { items: { some: { resourceId: opts.resourceId } } } },
+    select: { id: true },
+  });
+  return Boolean(bundled);
+}
+
+/** Published resources selectable when composing a bundle (admin). */
+export async function listSelectableResources() {
+  return prisma.resource.findMany({
+    where: { status: ResourceStatus.PUBLISHED, deletedAt: null },
+    orderBy: { title: "asc" },
+    take: 500,
+    select: { id: true, title: true, type: true, access: true, pricePaise: true },
+  });
 }
 
 export async function listBuyerDownloads(buyerId: string, email: string, limit = 25) {

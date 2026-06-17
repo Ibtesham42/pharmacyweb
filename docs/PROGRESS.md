@@ -171,3 +171,17 @@
 
 ### Follow-ups
 - Phase 3 remaining: exam-prep store + bundles (reserved `Order`/`OrderItem` tables), memberships/PREMIUM subscriptions, course scaffolding.
+
+## 2026-06-17 — Marketplace Phase 3: Exam-Prep Bundles
+- Built the exam-prep bundles track (user-selected). Consistent with the marketplace decision: denormalized purchase row + `lib/razorpay` (NOT the dormant `Order` tables).
+- **DB:** migration `7_add_bundles` (additive) — `Bundle`, `BundleItem` (join → `Resource`), `BundlePurchase` (mirrors `ResourcePurchase`). **Applied to Neon via `migrate deploy`** (verified: `migrate status` = up to date; tables queryable). Client regenerated.
+- **Entitlement integration:** `hasEntitlement` now also matches a PAID `BundlePurchase` whose bundle contains the resource → the existing secure download route grants bundle items with no change.
+- **Services:** `services/bundles.ts` (CRUD, public/admin lists, `getBundleBySlug` + `originalTotalPaise` for savings), `services/bundle-purchases.ts` (mirror of resource purchases; `hasBundlePurchase`, receipt email). `listSelectableResources` added to `services/resources.ts` for the picker.
+- **Payments:** `app/api/bundles/[slug]/purchase`, `/purchase/{verify,manual}`, `app/api/razorpay/bundle-webhook` — reuse `purchaseCreate/Verify/Manual` Zod schemas + a **generalised `ResourcePurchaseForm`** (added optional endpoint-override props, backward-compatible).
+- **Public:** `/exam-prep` (listing), `/exam-prep/[slug]` (contents + savings + buy/owned, per-item downloads when owned), `/exam-prep/receipt/[id]`, `loading.tsx`, `bundle-card.tsx`, `bundleJsonLd`. Bundle purchases surfaced in My Account; nav + sitemap updated.
+- **Admin:** Resources → **Bundles** tab — list/new/[id]/purchases + `actions.ts`; `bundle-form` (searchable resource picker + cover + SEO), `bundle-row-actions`, `bundle-purchases-table` (UPI verify).
+- Verified: `typecheck`, `lint`, `build` green (post-migration build has **zero** prisma errors; all `/exam-prep` + admin bundle routes compiled).
+
+### Follow-ups
+- Razorpay: register the `/api/razorpay/bundle-webhook` URL (reuses the donation keys/secret).
+- Phase 3 remaining: memberships/PREMIUM (recurring subscriptions), course scaffolding.

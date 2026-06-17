@@ -51,6 +51,10 @@ export function ResourcePurchaseForm({
   upiAvailable,
   defaultName = "",
   defaultEmail = "",
+  purchaseUrl,
+  verifyUrl = "/api/resources/purchase/verify",
+  manualUrl = "/api/resources/purchase/manual",
+  buyLabel,
 }: {
   slug: string;
   pricePaise: number;
@@ -58,8 +62,14 @@ export function ResourcePurchaseForm({
   upiAvailable: boolean;
   defaultName?: string;
   defaultEmail?: string;
+  /** Override the create endpoint (defaults to the single-resource route). */
+  purchaseUrl?: string;
+  verifyUrl?: string;
+  manualUrl?: string;
+  buyLabel?: string;
 }) {
   const router = useRouter();
+  const createUrl = purchaseUrl ?? `/api/resources/${slug}/purchase`;
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
   const [method, setMethod] = useState<Method>(razorpayAvailable ? "RAZORPAY" : "UPI_MANUAL");
@@ -84,7 +94,7 @@ export function ResourcePurchaseForm({
       theme: { color: "#0d9488" },
       handler: async (resp) => {
         try {
-          const v = await fetch("/api/resources/purchase/verify", {
+          const v = await fetch(verifyUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -113,7 +123,7 @@ export function ResourcePurchaseForm({
     }
     setBusy(true);
     try {
-      const res = await fetch(`/api/resources/${slug}/purchase`, {
+      const res = await fetch(createUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, method }),
@@ -139,7 +149,7 @@ export function ResourcePurchaseForm({
     }
     setBusy(true);
     try {
-      const res = await fetch("/api/resources/purchase/manual", {
+      const res = await fetch(manualUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ purchaseId: manual.purchaseId, transactionRef: ref }),
@@ -214,7 +224,7 @@ export function ResourcePurchaseForm({
       )}
       <Button type="submit" disabled={busy} className="w-full">
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
-        Buy now · {formatINR(pricePaise)}
+        {buyLabel ?? "Buy now"} · {formatINR(pricePaise)}
       </Button>
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5" /> Secure payment. Card details never touch our servers.

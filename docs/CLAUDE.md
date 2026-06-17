@@ -28,4 +28,4 @@ Living documentation. Keep these in sync — they are part of "definition of don
 - [ ] All CLAUDE.md "Last updated" lines bumped.
 
 ---
-_Last updated: 2026-06-17 — Marketplace **Phase 2 finished** (AI authoring tools incl. PDF grounding, admin analytics charts, bookmarks polish) + **Phase 3 started**: the **Thesis & Research Library** (`/library`, ScholarlyArticle, citation/DOI); `MARKETPLACE.md`/`AI.md`/`ROADMAP`/`PROGRESS`/`CHANGELOG` synced._
+_Last updated: 2026-06-17 — Marketplace **Phase 2 finished** + **Phase 3**: **Thesis & Research Library** (`/library`) and **Exam-Prep Bundles** (`/exam-prep`, migration `7_add_bundles` applied to Neon) shipped; `MARKETPLACE.md`/`ROADMAP`/`PROGRESS`/`CHANGELOG`/`prisma` synced._

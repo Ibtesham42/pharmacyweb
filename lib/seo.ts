@@ -243,6 +243,27 @@ export function scholarlyArticleJsonLd(p: ScholarlyLdInput): JsonLd {
   return ld;
 }
 
+/** schema.org Product for an exam-prep bundle, with an offer. */
+export function bundleJsonLd(p: { title: string; description: string; slug: string; image?: string | null; pricePaise: number }): JsonLd {
+  const url = absoluteUrl(`/exam-prep/${p.slug}`);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.title,
+    description: p.description,
+    image: p.image ? [p.image] : undefined,
+    url,
+    brand: { "@type": "Brand", name: siteConfig.name },
+    offers: {
+      "@type": "Offer",
+      price: (p.pricePaise / 100).toFixed(2),
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
+      url,
+    },
+  };
+}
+
 interface ResourceLdInput {
   title: string;
   description: string;

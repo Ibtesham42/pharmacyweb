@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/admin/resources", label: "Resources" },
+  { href: "/admin/resources/bundles", label: "Bundles" },
   { href: "/admin/resources/categories", label: "Categories" },
   { href: "/admin/resources/purchases", label: "Purchases" },
   { href: "/admin/resources/reviews", label: "Reviews" },

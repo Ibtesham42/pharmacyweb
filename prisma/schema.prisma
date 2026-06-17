@@ -669,13 +669,14 @@ model Resource {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  category  ResourceCategory?  @relation(fields: [categoryId], references: [id])
-  file      Media?             @relation("ResourceDownloadFile", fields: [fileId], references: [id])
-  tags      ResourceTag[]
-  purchases ResourcePurchase[]
-  reviews   ResourceReview[]
-  bookmarks ResourceBookmark[]
-  downloads ResourceDownload[]
+  category    ResourceCategory?  @relation(fields: [categoryId], references: [id])
+  file        Media?             @relation("ResourceDownloadFile", fields: [fileId], references: [id])
+  tags        ResourceTag[]
+  purchases   ResourcePurchase[]
+  reviews     ResourceReview[]
+  bookmarks   ResourceBookmark[]
+  downloads   ResourceDownload[]
+  bundleItems BundleItem[]
 
   @@index([type, status])
   @@index([access, status])
@@ -704,10 +705,11 @@ model Buyer {
   lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
 
-  purchases ResourcePurchase[]
-  reviews   ResourceReview[]
-  bookmarks ResourceBookmark[]
-  downloads ResourceDownload[]
+  purchases       ResourcePurchase[]
+  reviews         ResourceReview[]
+  bookmarks       ResourceBookmark[]
+  downloads       ResourceDownload[]
+  bundlePurchases BundlePurchase[]
 }
 
 // Magic-link / OTP tokens. Only the hash is stored.
@@ -797,4 +799,76 @@ model ResourceDownload {
 
   @@index([resourceId, createdAt])
   @@index([buyerId])
+}
+
+// ─────────────────────────── Exam-prep bundles ───────────────────────────
+
+// A priced set of resources sold together (e.g. a GPAT prep pack).
+model Bundle {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String         @unique
+  description     String         @db.Text
+  excerpt         String?
+  examType        String? // optional label, e.g. "GPAT", "NIPER"
+  pricePaise      Int            @default(0)
+  status          ResourceStatus @default(DRAFT)
+  coverImage      String?
+  previewImages   String[]
+  metaTitle       String?
+  metaDescription String?
+  ogImageUrl      String?
+  featured        Boolean        @default(false)
+  viewCount       Int            @default(0)
+  publishedAt     DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  items     BundleItem[]
+  purchases BundlePurchase[]
+
+  @@index([status, publishedAt])
+  @@index([featured])
+}
+
+model BundleItem {
+  bundleId   String
+  resourceId String
+  sortOrder  Int    @default(0)
+
+  bundle   Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@id([bundleId, resourceId])
+  @@index([resourceId])
+}
+
+// Bundle purchase (mirrors ResourcePurchase; reuses lib/razorpay.ts).
+model BundlePurchase {
+  id                String         @id @default(cuid())
+  receiptNo         String         @unique
+  buyerId           String?
+  bundleId          String
+  email             String
+  name              String?
+  amountPaise       Int
+  currency          String         @default("INR")
+  method            DonationMethod
+  status            OrderStatus    @default(PENDING)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  transactionRef    String?
+  ip                String?
+  createdAt         DateTime       @default(now())
+  paidAt            DateTime?
+
+  buyer  Buyer? @relation(fields: [buyerId], references: [id])
+  bundle Bundle @relation(fields: [bundleId], references: [id])
+
+  @@index([buyerId])
+  @@index([bundleId])
+  @@index([status])
+  @@index([email])
+  @@index([razorpayOrderId])
 }

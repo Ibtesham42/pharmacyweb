@@ -394,6 +394,25 @@ export const purchaseManualSchema = z.object({
   transactionRef: z.string().min(4, "Enter the UPI reference / UTR").max(60),
 });
 
+// ─────────────────────────── Exam-prep bundles ───────────────────────────
+export const bundleSchema = z.object({
+  title: z.string().min(3, "Title is too short").max(200),
+  slug: z.string().max(200).regex(/^[a-z0-9-]*$/i).optional().or(z.literal("")),
+  description: z.string().min(10, "Add a description").max(20_000),
+  excerpt: optStr(300),
+  examType: optStr(40),
+  pricePaise: z.coerce.number().int().min(100, "Set a price of at least ₹1").max(5_000_000),
+  status: z.nativeEnum(ResourceStatus).default(ResourceStatus.DRAFT),
+  coverImage: z.string().url().optional().or(z.literal("")),
+  previewImages: z.array(z.string().url()).max(8).default([]),
+  resourceIds: z.array(z.string().cuid()).min(1, "Add at least one resource").max(100),
+  metaTitle: optStr(120),
+  metaDescription: optStr(300),
+  ogImageUrl: z.string().url().optional().or(z.literal("")),
+  featured: z.boolean().default(false),
+});
+export type BundleInput = z.infer<typeof bundleSchema>;
+
 export const reviewSchema = z.object({
   resourceId: z.string().cuid(),
   rating: z.coerce.number().int().min(1).max(5),

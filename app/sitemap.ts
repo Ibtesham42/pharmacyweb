@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/news",
     "/store",
     "/library",
+    "/exam-prep",
     "/categories",
     "/search",
     "/about",
@@ -27,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === "" ? 1 : 0.7,
   }));
 
-  const [posts, categories, resources] = await Promise.all([
+  const [posts, categories, resources, bundles] = await Promise.all([
     prisma.post.findMany({
       where: { deletedAt: null, status: "PUBLISHED" },
       select: { type: true, slug: true, updatedAt: true },
@@ -41,7 +42,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       orderBy: { updatedAt: "desc" },
       take: 5000,
     }),
-  ]).catch(() => [[], [], []] as const);
+    prisma.bundle.findMany({
+      where: { deletedAt: null, status: "PUBLISHED" },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+      take: 2000,
+    }),
+  ]).catch(() => [[], [], [], []] as const);
 
   const postRoutes: MetadataRoute.Sitemap = posts.map((p) => ({
     url: absoluteUrl(postPath(p.type, p.slug)),
@@ -63,5 +70,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...postRoutes, ...categoryRoutes, ...resourceRoutes];
+  const bundleRoutes: MetadataRoute.Sitemap = bundles.map((b) => ({
+    url: absoluteUrl(`/exam-prep/${b.slug}`),
+    lastModified: b.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...postRoutes, ...categoryRoutes, ...resourceRoutes, ...bundleRoutes];
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, Receipt, ShoppingBag, Clock } from "lucide-react";
+import { Download, Receipt, ShoppingBag, Clock, Package } from "lucide-react";
 import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { AccountLogoutButton } from "@/components/public/account-logout-button";
 import { SavedResources } from "@/components/public/saved-resources";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBuyer } from "@/lib/buyer-session";
 import { listBuyerPurchases } from "@/services/resource-purchases";
+import { listBuyerBundlePurchases } from "@/services/bundle-purchases";
 import { listBuyerDownloads } from "@/services/resources";
 import { listBuyerBookmarks } from "@/services/resource-bookmarks";
 import { formatINR, formatDate } from "@/lib/format";
@@ -25,11 +26,13 @@ export const metadata = buildMetadata({
 
 export default async function AccountPage() {
   const buyer = await requireBuyer("/account");
-  const [purchases, downloads, bookmarks] = await Promise.all([
+  const [purchases, bundlePurchases, downloads, bookmarks] = await Promise.all([
     safe(listBuyerPurchases(buyer.id, buyer.email), []),
+    safe(listBuyerBundlePurchases(buyer.id, buyer.email), []),
     safe(listBuyerDownloads(buyer.id, buyer.email), []),
     safe(listBuyerBookmarks(buyer.id), []),
   ]);
+  const purchaseCount = purchases.length + bundlePurchases.length;
 
   return (
     <div className="container max-w-4xl py-8">
@@ -44,15 +47,42 @@ export default async function AccountPage() {
 
       <Tabs defaultValue="purchases" className="mt-6">
         <TabsList>
-          <TabsTrigger value="purchases">Purchases{purchases.length ? ` (${purchases.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="purchases">Purchases{purchaseCount ? ` (${purchaseCount})` : ""}</TabsTrigger>
           <TabsTrigger value="saved">Saved{bookmarks.length ? ` (${bookmarks.length})` : ""}</TabsTrigger>
           <TabsTrigger value="downloads">Downloads{downloads.length ? ` (${downloads.length})` : ""}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="purchases" className="space-y-3">
-          {purchases.length === 0 ? (
-            <Empty icon={ShoppingBag} text="No purchases yet." />
-          ) : (
+          {purchaseCount === 0 && <Empty icon={ShoppingBag} text="No purchases yet." />}
+
+          {bundlePurchases.map((p) => (
+            <Card key={p.id}>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div>
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <Package className="h-4 w-4 text-primary" /> {p.bundle.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Bundle · {p.bundle._count.items} resources · {formatINR(p.amountPaise)} · {formatDate(p.paidAt)} · {p.receiptNo}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button asChild size="sm">
+                    <Link href={`/exam-prep/${p.bundle.slug}`}>
+                      <Download className="h-4 w-4" /> Open bundle
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/exam-prep/receipt/${p.id}`}>
+                      <Receipt className="h-4 w-4" /> Receipt
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {purchases.length > 0 &&
             purchases.map((p) => (
               <Card key={p.id}>
                 <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -76,8 +106,7 @@ export default async function AccountPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
+            ))}
         </TabsContent>
 
         <TabsContent value="saved" className="space-y-3">

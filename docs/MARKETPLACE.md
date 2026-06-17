@@ -96,7 +96,22 @@ Detail pages stay canonical at `/store/[slug]` (no duplicate URLs) but, for rese
 meta row, a library-rooted breadcrumb, and **ScholarlyArticle** JSON-LD (`scholarlyArticleJsonLd` in
 `lib/seo.ts`) alongside the Product schema. Added to the header nav + `sitemap.ts`.
 
+## Phase 3 — Exam-Prep Bundles (shipped 2026-06-17)
+A `/exam-prep` store selling **multi-resource bundles**. Consistent with the marketplace decision
+(denormalized purchase row + `lib/razorpay`, **not** the dormant `Order` tables): migration
+`7_add_bundles` adds `Bundle`, `BundleItem` (join → `Resource`) and `BundlePurchase` (mirrors
+`ResourcePurchase`). Buying a bundle grants entitlement to **every** resource in it — `hasEntitlement`
+now also matches a PAID `BundlePurchase` whose bundle contains the resource, so the existing secure
+download route works unchanged. Bundle price vs. un-bundled total drives a "save %" display.
+- **Services:** `services/bundles.ts` (CRUD + public/admin lists, `getBundleBySlug` with `originalTotalPaise`),
+  `services/bundle-purchases.ts` (mirrors resource purchases; `hasBundlePurchase`, receipt email).
+- **Payments:** `app/api/bundles/[slug]/purchase`, `/purchase/{verify,manual}`, `app/api/razorpay/bundle-webhook`
+  (reuses `purchaseCreate/Verify/Manual` Zod schemas + the generalised `ResourcePurchaseForm` via endpoint props).
+- **Public:** `app/(public)/exam-prep/{page,[slug]/page,receipt/[id]/page,loading}.tsx`, `components/public/bundle-card.tsx`;
+  bundle Product JSON-LD (`bundleJsonLd`). Owners get per-item Download buttons + the bundle in My Account.
+- **Admin:** Resources → **Bundles** tab — `app/admin/(panel)/resources/bundles/{page,new,[id],purchases}` +
+  `actions.ts`; `components/admin/{bundle-form,bundle-row-actions,bundle-purchases-table}.tsx` (resource picker, cover, UPI verify).
+
 ## Roadmap (deferred, schema-ready)
-- **Phase 3 (remaining):** Exam-prep store (`/exam-prep`, bundles via the reserved `Order` tables),
-  memberships/subscriptions (PREMIUM gating), course marketplace scaffolding (`Product.COURSE` +
-  future `Lesson/Enrollment/Certificate`).
+- **Phase 3 (remaining):** memberships/subscriptions (PREMIUM gating — recurring Razorpay), course
+  marketplace scaffolding (`Product.COURSE` + future `Lesson/Enrollment/Certificate`).

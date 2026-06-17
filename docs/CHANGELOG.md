@@ -31,6 +31,8 @@ All notable changes to this project are documented here (format: [Keep a Changel
 
 - **Thesis & Research Library (Marketplace Phase 3):** a dedicated `/library` for research papers and theses — filter by **year** and **subject**, search title/author/abstract, with research-oriented cards (type, year, author, abstract). Resource detail pages for research items gain a proper **"How to cite"** block (copy citation + DOI link), a **publication year**, a library-rooted breadcrumb, and **ScholarlyArticle** structured data (alongside the Product schema). Added to the nav and sitemap.
 
+- **Exam-Prep Bundles (Marketplace Phase 3):** a dedicated `/exam-prep` store selling **multi-resource bundles** (e.g. GPAT/NIPER packs) at a saving. Bundle pages list everything included, show the bundled price vs the un-bundled total (**save %**), and buy via the same Razorpay-instant + UPI-manual flow as resources. Buying a bundle **grants download access to every resource in it** (entitlement-checked downloads) — owners see per-item Download buttons and the bundle in My Account. Printable receipts + emailed receipt links. Full **admin** suite (Resources → **Bundles**): create/edit/delete with a searchable resource picker and cover image, publish/draft, plus a **bundle purchases** view with UPI verification. Added to the nav and sitemap (migration `7_add_bundles`).
+
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.
 
