@@ -1,13 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { ResourceAccess } from "@prisma/client";
 import {
   getResourceWithFile,
   hasEntitlement,
   recordDownload,
   incrementDownload,
 } from "@/services/resources";
-import { getMarketplaceSettings } from "@/services/marketplace-settings";
 import { getCurrentBuyer } from "@/lib/buyer-session";
 import { verifyDownloadToken } from "@/lib/download-token";
 import { signedDownloadUrl } from "@/lib/cloudinary";
@@ -45,18 +43,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   const buyerId = buyer?.id ?? token?.buyerId ?? null;
   const email = buyer?.email ?? token?.email ?? null;
 
-  const settings = await getMarketplaceSettings();
-  const loginUrl = new URL(`/account/login?next=${encodeURIComponent(`/store/${slug}`)}`, req.url);
-
-  // Free resources may optionally require a verified account.
-  if (resource.access === ResourceAccess.FREE) {
-    if (settings.freeRequiresAccount && !buyerId && !email) {
-      return NextResponse.redirect(loginUrl);
-    }
-  } else {
-    if (!buyerId && !email) return NextResponse.redirect(loginUrl);
+  // No file may be downloaded without authentication (signed-in user or a valid
+  // signed re-download token) — applies to free AND paid resources.
+  if (!buyerId && !email) {
+    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(`/store/${slug}`)}`, req.url));
   }
 
+  // FREE → any signed-in user; PAID/PREMIUM → entitlement (purchase, bundle, or active membership).
   const entitled = await hasEntitlement({
     resourceId: resource.id,
     access: resource.access,
@@ -64,7 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     email,
   });
   if (!entitled) {
-    // Signed in but hasn't purchased → send to the resource page to buy.
+    // Signed in but not entitled → send to the resource page to buy / go PREMIUM.
     return NextResponse.redirect(new URL(`/store/${slug}?buy=1`, req.url));
   }
 

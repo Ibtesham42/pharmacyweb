@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Search, Pill, ChevronDown, Heart } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { Menu, X, Search, Pill, ChevronDown, Heart, UserRound, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,13 @@ const NAV_AFTER = [{ href: "/about", label: "About" }];
 export function SiteHeader({
   categories = [],
   donateEnabled = false,
+  authed = false,
+  isAdmin = false,
 }: {
   categories?: HeaderCategory[];
   donateEnabled?: boolean;
+  authed?: boolean;
+  isAdmin?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -110,6 +115,36 @@ export function SiteHeader({
           )}
           <div className="hidden md:block">
             <ThemeToggle />
+          </div>
+          <div className="hidden md:block">
+            {authed ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  aria-label="Account"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <UserRound className="h-5 w-5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/account">My account</Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">Admin dashboard</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => signOut({ callbackUrl: "/" })}>
+                    <LogOut className="mr-2 h-4 w-4" /> Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild size="sm" variant="outline">
+                <Link href="/login">Sign in</Link>
+              </Button>
+            )}
           </div>
           <Link
             href="/search"
@@ -186,6 +221,47 @@ export function SiteHeader({
                 {item.label}
               </Link>
             ))}
+
+            <div className="mt-1 border-t pt-1">
+              {authed ? (
+                <>
+                  <Link
+                    href="/account"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium hover:bg-accent"
+                  >
+                    <UserRound className="h-4 w-4" /> My account
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base font-medium hover:bg-accent"
+                    >
+                      Admin dashboard
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-3 text-left text-base font-medium hover:bg-accent"
+                  >
+                    <LogOut className="h-4 w-4" /> Sign out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium hover:bg-accent"
+                >
+                  <UserRound className="h-4 w-4" /> Sign in
+                </Link>
+              )}
+            </div>
           </div>
         </nav>
       )}

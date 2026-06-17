@@ -40,6 +40,32 @@ export const passwordChangeSchema = z
   });
 export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
 
+// Public account auth (unified system)
+export const signupSchema = z.object({
+  name: z.string().min(2, "Please enter your name").max(120),
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(200),
+  website: z.string().max(0).optional(), // honeypot
+});
+export type SignupInput = z.infer<typeof signupSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  website: z.string().max(0).optional(), // honeypot
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(10, "Invalid reset link").max(256),
+    password: z.string().min(8, "Password must be at least 8 characters").max(200),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
 // ─────────────────────────── Shared ───────────────────────────
 const referenceSchema = z.object({
   label: z.string().min(1).max(200),

@@ -1,6 +1,6 @@
 # Roadmap — Pharmacy Job Portal
 
-_Last updated: 2026-06-17 (Marketplace Phase 1 + AI authoring tools)._ Status: ☐ todo · ◐ in progress · ☑ done
+_Last updated: 2026-06-18 (Unified Authentication & Resource Access Control — Phase 1)._ Status: ☐ todo · ◐ in progress · ☑ done
 
 ## MVP milestone
 
@@ -20,6 +20,7 @@ _Last updated: 2026-06-17 (Marketplace Phase 1 + AI authoring tools)._ Status: �
 | 12 AI (Phase 2) | Groq chat (streaming) + **multimodal image/document understanding** + **Career Copilot** (resume analysis, job match, interview prep, study, learning recs) + Admin AI Settings + safety + usage analytics; RAG/article-assistant/semantic-search designed (`docs/AI.md`). | ◐ |
 | 13 Donations | Support platform: Razorpay + UPI/QR, donor form, printable receipts, admin donor management + analytics, CSV export (`docs/DONATIONS.md`). Recurring/memberships designed. | ◐ |
 | 14 Marketplace | Digital Resources Marketplace (`/store`): free/paid downloads, secure delivery, passwordless buyer accounts, Razorpay + UPI, moderated reviews, admin suite + analytics (`docs/MARKETPLACE.md`). **Phase 2:** admin **AI authoring tools** (excerpt/SEO/tags/MCQs/flashcards, incl. PDF grounding), analytics charts, bookmarks UX. **Phase 3:** **Thesis & Research Library** (`/library`), **Exam-Prep Bundles** (`/exam-prep`, `7_add_bundles`), **PREMIUM Memberships** (`/membership`, `8_add_memberships`, all-access). Phases 1–3 complete; course marketplace is a separate future milestone. | ☑ |
+| 15 Auth & Access | **Unified authentication** (Auth.js): sign up / in / forgot / reset / profile / change-password + magic-link, one platform-wide system (admin + public consolidated), `Buyer` bridged to `User` by email (`9_add_user_auth`). Roles (Guest/USER/ADMIN; Premium/VIP via membership), **protected downloads** (no file without auth) + guest modal, user dashboard. Email-verification scaffolded (`docs/AUTH.md`). **Phase 2:** saved jobs/articles, linked AI chats, notifications. **Phase 3:** admin user management. | ◐ |
 
 ### Remaining to go live (requires accounts/secrets)
 1. Provision Neon Postgres; set `DATABASE_URL` + `DIRECT_URL`.

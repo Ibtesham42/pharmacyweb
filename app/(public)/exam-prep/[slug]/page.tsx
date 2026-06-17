@@ -13,6 +13,7 @@ import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { Markdown } from "@/components/markdown";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ResourcePurchaseForm } from "@/components/public/resource-purchase-form";
+import { DownloadGate } from "@/components/public/download-gate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,7 +143,9 @@ export default async function BundleDetailPage({ params }: { params: Promise<{ s
                 )}
               </div>
 
-              {owned ? (
+              {!buyer ? (
+                <DownloadGate next={`/exam-prep/${b.slug}`} label={`Buy bundle · ${formatINR(b.pricePaise)}`} />
+              ) : owned ? (
                 <div className="rounded-md border bg-accent/40 p-3 text-center text-sm">
                   <Check className="mx-auto mb-1 h-5 w-5 text-primary" />
                   You own this bundle — download any item above.

@@ -124,6 +124,24 @@ export async function getDonationForReceipt(id: string) {
   });
 }
 
+/** A buyer's own donation history (by email), receipt-safe (no internal fields). */
+export async function listDonationsByEmail(email: string) {
+  return prisma.donation.findMany({
+    where: { email: email.toLowerCase() },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      receiptNo: true,
+      amountPaise: true,
+      status: true,
+      method: true,
+      createdAt: true,
+      paidAt: true,
+    },
+  });
+}
+
 export async function adminSetStatus(id: string, status: DonationStatus) {
   return prisma.donation.update({
     where: { id },

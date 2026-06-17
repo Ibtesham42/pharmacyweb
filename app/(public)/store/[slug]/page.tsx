@@ -17,6 +17,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { RatingStars } from "@/components/public/rating-stars";
 import { ReviewForm } from "@/components/public/review-form";
 import { BookmarkButton } from "@/components/public/bookmark-button";
+import { DownloadGate } from "@/components/public/download-gate";
 import { CitationBlock } from "@/components/public/citation-block";
 import { ResourcePurchaseForm } from "@/components/public/resource-purchase-form";
 import { Card, CardContent } from "@/components/ui/card";
@@ -210,7 +211,18 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                 )}
               </div>
 
-              {entitled ? (
+              {!buyer ? (
+                <DownloadGate
+                  next={`/store/${r.slug}`}
+                  label={
+                    r.access === ResourceAccess.FREE
+                      ? "Download"
+                      : r.access === ResourceAccess.PREMIUM
+                        ? "Get PREMIUM"
+                        : `Buy now · ${formatINR(r.pricePaise)}`
+                  }
+                />
+              ) : entitled ? (
                 <Button asChild className="w-full">
                   <a href={`/api/resources/${r.slug}/download`}>
                     <Download className="h-4 w-4" /> Download

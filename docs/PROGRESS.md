@@ -201,3 +201,18 @@
 - Razorpay: register the `/api/razorpay/membership-webhook` URL (reuses the donation keys/secret).
 - Admin → Resources → Memberships: create at least one active plan to open `/membership`.
 - Future (separate milestone): course marketplace (`Product.COURSE` + `Lesson/Enrollment/Certificate`); optional true recurring subscriptions.
+
+## 2026-06-18 — Unified Authentication, Roles & Resource Access Control (Phase 1)
+- Audited the codebase and found **two** auth systems (admin NextAuth `User` + passwordless cookie `Buyer`). Per approved plan (`docs/AUTH.md`), consolidated onto **one** NextAuth system; kept `Buyer` **bridged to `User` by email** (no FK migration) so the whole marketplace keeps working.
+- **DB:** migration `9_add_user_auth` (additive) — recreated `Role` enum to add `USER` (transaction-safe rename+recreate, default `USER`), added `UserStatus`, `MembershipTier`, nullable `User.passwordHash`, `User.emailVerified/status`, `Buyer.userId` (+FK), `MembershipPlan.tier/benefits`, and `PasswordResetToken`. **Applied to Neon.** `10_user_role_default` is a **no-op** — Prisma orders migrations lexicographically so `"10" < "9"`; the default is set inside `9` and `10` is retained only for a clean ledger (recovered a failed first attempt via `migrate resolve --rolled-back`).
+- **Auth core:** `lib/auth.ts` password + `magiclink` providers (reject null-hash/SUSPENDED); `lib/auth.config.ts` role-gated `authorized` (`/admin` → ADMIN/EDITOR only, USER redirected to `/account`; `/account` → any signed-in); `middleware.ts` matches `/admin` + `/account`; `lib/session.ts` `requireUser`; **`lib/buyer-session.ts` reimplemented as the NextAuth→Buyer bridge** (`getCurrentBuyer`/`requireBuyer`). `types/next-auth.d.ts` already carried `role`.
+- **Services/validation:** `services/users.ts` (createUser, ensureUserForEmail, create/consumePasswordReset), `services/account.ts` changePassword made null-safe; reused for the public dashboard. New Zod `signup/forgot/reset` schemas.
+- **Pages/API:** `/login` (password + email-link tabs), `/signup`, `/forgot-password`, `/reset-password`, `/account/verify`; `app/api/account/{signup,forgot-password,reset-password}`. Magic-link reworked to NextAuth (emailed link → `/account/verify` → `signIn`); removed `/api/buyers/{verify,logout}` + admin `LoginForm`; `/admin/login` + `/account/login` redirect to `/login`.
+- **Protected downloads:** `app/api/resources/[slug]/download` now requires auth for **all** files; `components/public/download-gate.tsx` (new shadcn `ui/dialog.tsx`) gates guests on `/store/[slug]` + `/exam-prep/[slug]`.
+- **Dashboard:** `/account` gained Profile (edit + change password) + Donation history tabs; sign-out via NextAuth; header account menu (`site-header` + layout pass `authed`/`isAdmin`).
+- **Verified end-to-end (dev server):** auth pages 200; guest `/account` → `/login`; signup → role `USER`; credentials sign-in → session; authed `/account` 200; **USER → `/admin` redirected to `/account`**; password reset round-trip (token from dev mailer) → sign in with new password; **guest download → 307 `/login?next=…`**. `typecheck`/`lint`/`build` green; migration applied + schema up to date. All temp test data cleaned up.
+
+### Follow-ups
+- Phase 2: Saved Jobs/Articles (`PostBookmark`), AI chats linked to accounts, Notifications.
+- Phase 3: Admin user management (suspend, grant/revoke Premium, activity) + membership tiers/benefits in the admin manager.
+- Email verification is scaffolded (`User.emailVerified`) — enforce later. Set `RESEND_API_KEY` for live reset/magic-link emails (dev logs them to the console).

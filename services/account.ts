@@ -27,6 +27,9 @@ export async function updateProfile(userId: string, data: { name: string; email:
 export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error("User not found");
+  if (!user.passwordHash) {
+    throw new Error("Your account has no password yet. Use “Forgot password” to set one.");
+  }
 
   const valid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!valid) throw new Error("Current password is incorrect");

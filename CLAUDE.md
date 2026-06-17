@@ -67,4 +67,4 @@ Copy `.env.example` → `.env`. Never commit secrets. Required: `DATABASE_URL`, 
 6. Run `npm run typecheck && npm run lint && npm run build` before declaring a phase done.
 
 ---
-_Last updated: 2026-06-17 — AI module (Groq chat + multimodal + Career Copilot + **admin resource authoring tools**, see `docs/AI.md`), the **Donation/Support platform** (Razorpay + UPI/QR + **Featured Supporters**, see `docs/DONATIONS.md`), and the **Digital Resources Marketplace** (free/paid downloads, secure delivery, passwordless buyer accounts, reviews; **Phase 2 AI authoring tools** — see `docs/MARKETPLACE.md`), on top of the UX pass and Phase 11 MVP._
+_Last updated: 2026-06-18 — **Unified Authentication & Resource Access Control** (Auth.js: signup/signin/forgot/reset/profile + magic-link, one platform-wide system, roles, protected downloads, user dashboard — see `docs/AUTH.md`); on top of the AI module (Groq chat + multimodal + Career Copilot + admin resource authoring tools, `docs/AI.md`), the **Donation/Support platform** (`docs/DONATIONS.md`), and the **Digital Resources Marketplace** incl. Library, Exam-Prep Bundles & PREMIUM Memberships (`docs/MARKETPLACE.md`)._

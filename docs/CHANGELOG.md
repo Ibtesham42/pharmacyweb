@@ -5,6 +5,9 @@ All notable changes to this project are documented here (format: [Keep a Changel
 ## [Unreleased] — 2026-06-15 — UX & accessibility pass
 
 ### Added
+- **Unified authentication & accounts (Phase 1):** one platform-wide sign-in built on Auth.js — **Sign up**, **Sign in**, **Forgot/Reset password**, **profile + change password**, and passwordless **email-link/OTP** — at `/login`, `/signup`, `/forgot-password`, `/reset-password`. The previous separate admin login and buyer magic-link were **consolidated into one system** (legacy `/admin/login` and `/account/login` now redirect to `/login`); a header account menu shows Sign in / My account / Sign out. **Roles:** Guest (browse only), Registered user (downloads, saves, purchases, profile), and Admin/Editor; **Premium/VIP** derive from an active membership (architecture ready). The marketplace `Buyer` is bridged to the unified `User` by email, so all existing purchases/downloads/memberships keep working unchanged.
+- **Protected downloads:** no resource file can be downloaded without signing in — free *and* paid. Guests clicking Download/Buy get a professional modal ("Please sign in or create an account…") with Sign in / Create account, returning to the resource after login. Paid resources still require purchase; premium resources require an active membership.
+- **User dashboard (`/account`):** Profile (edit + change password), Purchases (resources + bundles, re-download + receipts), Saved resources, Download history, Membership status, and Donation history.
 - **Dark mode** with system-preference detection and a header toggle; no flash on load.
 - **Reading time** estimate on article and news pages.
 - **Back-to-top** button on all public pages.

@@ -17,6 +17,18 @@ datasource db {
 enum Role {
   ADMIN
   EDITOR
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MembershipTier {
+  FREE
+  PREMIUM
+  VIP
 }
 
 enum PostType {
@@ -134,19 +146,38 @@ enum ReviewStatus {
 
 // ─────────────────────────── Core ───────────────────────────
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String
-  role         Role      @default(ADMIN)
-  avatarUrl    String?
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String? // nullable: magic-link / future-social users have none
+  name          String
+  role          Role       @default(USER)
+  status        UserStatus @default(ACTIVE)
+  emailVerified DateTime? // email-verification scaffolding (not enforced yet)
+  avatarUrl     String?
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  posts     Post[]
-  media     Media[]
-  auditLogs AuditLog[]
+  posts          Post[]
+  media          Media[]
+  auditLogs      AuditLog[]
+  buyer          Buyer?
+  passwordResets PasswordResetToken[]
+}
+
+// Single-use password-reset tokens (hashed). Mirrors BuyerAuthToken.
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Post {
@@ -700,11 +731,13 @@ model ResourceTag {
 model Buyer {
   id            String    @id @default(cuid())
   email         String    @unique
+  userId        String?   @unique // bridge to the unified User account (by email at runtime)
   name          String?
   emailVerified Boolean   @default(false)
   lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
 
+  user                User?                @relation(fields: [userId], references: [id])
   purchases           ResourcePurchase[]
   reviews             ResourceReview[]
   bookmarks           ResourceBookmark[]
@@ -885,6 +918,8 @@ model MembershipPlan {
   durationDays Int
   pricePaise  Int
   badge       String? // optional label, e.g. "Most popular"
+  tier        MembershipTier @default(PREMIUM)
+  benefits    String[] // bullet-point perks shown on the plan
   active      Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())

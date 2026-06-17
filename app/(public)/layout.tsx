@@ -13,6 +13,7 @@ import { isGroqConfigured } from "@/lib/ai/groq";
 import { AI_MODE_KEYS, DEFAULT_AI_SETTINGS } from "@/lib/ai/config";
 import { getDonationSettings } from "@/services/donations";
 import { DEFAULT_DONATION_SETTINGS } from "@/lib/donations/config";
+import { getCurrentUser } from "@/lib/session";
 
 // Site-wide AdSense loader on all public pages (required for Google's site
 // review/approval and Auto ads). Individual units only render <ins> + push.
@@ -20,11 +21,13 @@ const adsenseEnabled = process.env.NEXT_PUBLIC_ADSENSE_ENABLED === "true";
 const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const [categories, aiSettings, donationSettings] = await Promise.all([
+  const [categories, aiSettings, donationSettings, currentUser] = await Promise.all([
     safe(listPublicCategories(), []),
     safe(getAiSettings(), DEFAULT_AI_SETTINGS),
     safe(getDonationSettings(), DEFAULT_DONATION_SETTINGS),
+    safe(getCurrentUser(), null),
   ]);
+  const isAdmin = currentUser?.role === "ADMIN" || currentUser?.role === "EDITOR";
   const navCategories = categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
   const aiModes = AI_MODE_KEYS.filter((m) => aiSettings.modes[m]);
   const aiEnabled =
@@ -42,7 +45,12 @@ export default async function PublicLayout({ children }: { children: React.React
         />
       )}
       <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
-      <SiteHeader categories={navCategories} donateEnabled={donationSettings.enabled} />
+      <SiteHeader
+        categories={navCategories}
+        donateEnabled={donationSettings.enabled}
+        authed={Boolean(currentUser)}
+        isAdmin={isAdmin}
+      />
       <main className="min-h-[60vh]">{children}</main>
       <SiteFooter />
       <BackToTop />

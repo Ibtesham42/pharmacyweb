@@ -4,22 +4,34 @@ import type { NextAuthConfig } from "next-auth";
 // protection and shared by the full config in `lib/auth.ts`.
 export const authConfig = {
   session: { strategy: "jwt" },
-  pages: { signIn: "/admin/login" },
+  pages: { signIn: "/login" },
   trustHost: true,
   providers: [], // real providers are added in lib/auth.ts (Node runtime)
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
+      const user = auth?.user as { role?: string } | undefined;
+      const isLoggedIn = !!user;
+      const isAdmin = user?.role === "ADMIN" || user?.role === "EDITOR";
       const path = nextUrl.pathname;
-      const isLoginPage = path === "/admin/login";
-      const isAdminArea = path.startsWith("/admin");
 
-      if (isAdminArea && !isLoginPage) {
-        return isLoggedIn; // false → redirect to signIn page
+      const isAdminArea = path.startsWith("/admin");
+      const isAdminLogin = path === "/admin/login";
+      // Account/dashboard area, excluding its own public auth pages.
+      const isAccountArea =
+        (path === "/account" || path.startsWith("/account/")) &&
+        path !== "/account/login" &&
+        path !== "/account/verify";
+
+      // Admin area is restricted to ADMIN/EDITOR roles.
+      if (isAdminArea && !isAdminLogin) {
+        if (!isLoggedIn) return false; // → redirect to signIn (/login) with callbackUrl
+        if (!isAdmin) return Response.redirect(new URL("/account", nextUrl)); // signed-in non-admin
+        return true;
       }
-      if (isLoginPage && isLoggedIn) {
-        return Response.redirect(new URL("/admin", nextUrl));
-      }
+
+      // Account/dashboard requires any signed-in user.
+      if (isAccountArea) return isLoggedIn;
+
       return true;
     },
     jwt({ token, user }) {
@@ -32,7 +44,7 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = (token.role as string) ?? "ADMIN";
+        session.user.role = (token.role as string) ?? "USER";
       }
       return session;
     },

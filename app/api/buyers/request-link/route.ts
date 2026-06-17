@@ -23,8 +23,9 @@ export async function POST(req: NextRequest) {
   if (d.website) return NextResponse.json({ ok: true }); // honeypot
 
   const { token, code } = await requestLoginLink(d.email, d.name || undefined);
+  // Link lands on a client page that signs the user into NextAuth via the magiclink provider.
   const link = absoluteUrl(
-    `/api/buyers/verify?token=${encodeURIComponent(token)}${d.next ? `&next=${encodeURIComponent(d.next)}` : ""}`,
+    `/account/verify?token=${encodeURIComponent(token)}${d.next ? `&next=${encodeURIComponent(d.next)}` : ""}`,
   );
 
   await sendEmail({

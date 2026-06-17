@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { Mail, Loader2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,13 +44,8 @@ export function MagicLinkForm({ next = "/account" }: { next?: string }) {
     if (code.trim().length < 4) return toast.error("Enter the 6-digit code");
     setBusy(true);
     try {
-      const res = await fetch("/api/buyers/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
-      });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(data.error || "Invalid code");
+      const res = await signIn("magiclink", { email, code, redirect: false });
+      if (!res || res.error) throw new Error("Invalid or expired code. Request a new link.");
       toast.success("Signed in");
       router.push(next);
       router.refresh();
