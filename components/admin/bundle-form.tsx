@@ -63,11 +63,13 @@ export function BundleForm({
 }: {
   mode: "create" | "edit";
   bundleId?: string;
-  initial: BundleFormInitial;
+  /** Optional: omit on create. Defaulted here (client-side) so Server Components
+   *  never have to call this client-module function (which RSC forbids). */
+  initial?: BundleFormInitial;
   resources: ResourceOption[];
 }) {
   const router = useRouter();
-  const [s, setS] = useState<BundleFormInitial>(initial);
+  const [s, setS] = useState<BundleFormInitial>(() => initial ?? emptyBundleInitial());
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);

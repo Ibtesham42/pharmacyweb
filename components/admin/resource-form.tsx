@@ -91,11 +91,13 @@ export function ResourceForm({
 }: {
   mode: "create" | "edit";
   resourceId?: string;
-  initial: ResourceFormInitial;
+  /** Optional: omit on create. Defaulted here (client-side) so Server Components
+   *  never have to call this client-module function (which RSC forbids). */
+  initial?: ResourceFormInitial;
   categories: { id: string; name: string }[];
 }) {
   const router = useRouter();
-  const [s, setS] = useState<ResourceFormInitial>(initial);
+  const [s, setS] = useState<ResourceFormInitial>(() => initial ?? emptyResourceInitial());
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
   const [uploadingPreview, setUploadingPreview] = useState(false);

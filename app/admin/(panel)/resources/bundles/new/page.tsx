@@ -1,10 +1,12 @@
 import { listSelectableResources } from "@/services/resources";
-import { BundleForm, emptyBundleInitial } from "@/components/admin/bundle-form";
+import { BundleForm } from "@/components/admin/bundle-form";
 import { safe } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewBundlePage() {
   const resources = await safe(listSelectableResources(), []);
-  return <BundleForm mode="create" initial={emptyBundleInitial()} resources={resources} />;
+  // `initial` omitted on purpose — BundleForm defaults it on the client. A Server
+  // Component must not call the client-only emptyBundleInitial().
+  return <BundleForm mode="create" resources={resources} />;
 }
