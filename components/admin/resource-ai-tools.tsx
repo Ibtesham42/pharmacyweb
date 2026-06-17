@@ -24,6 +24,7 @@ export interface ResourceAiSource {
 
 interface Props {
   getSource: () => ResourceAiSource;
+  attachedFile?: { id?: string; name?: string };
   onExcerpt: (excerpt: string) => void;
   onSeo: (seo: { metaTitle: string; metaDescription: string }) => void;
   onTags: (tags: string[]) => void;
@@ -51,10 +52,21 @@ function flashcardsToMarkdown(cards: FlashcardResult["cards"]): string {
   return `## Flashcards\n\n${rows}\n`;
 }
 
-export function ResourceAiTools({ getSource, onExcerpt, onSeo, onTags, onAppendDescription }: Props) {
+export function ResourceAiTools({
+  getSource,
+  attachedFile,
+  onExcerpt,
+  onSeo,
+  onTags,
+  onAppendDescription,
+}: Props) {
   const [busy, setBusy] = useState<Tool | null>(null);
   const [preview, setPreview] = useState<Preview>(null);
   const [count, setCount] = useState(5);
+  const [useFile, setUseFile] = useState(false);
+
+  const fileId = attachedFile?.id;
+  const usingFile = useFile && !!fileId;
 
   async function call<T>(tool: Tool, extra?: { count?: number }): Promise<ToolResult<T> | null> {
     const src = getSource();
@@ -62,16 +74,19 @@ export function ResourceAiTools({ getSource, onExcerpt, onSeo, onTags, onAppendD
       toast.error("Add a title first");
       return null;
     }
-    if (src.text.trim().length < 20) {
-      toast.error("Add a longer description for the AI to work with");
+    if (!usingFile && src.text.trim().length < 20) {
+      toast.error('Add a longer description, or attach a file and tick "Use attached file"');
       return null;
     }
     setBusy(tool);
     try {
+      const payload = usingFile
+        ? { tool, title: src.title, type: src.type, fileId, useFile: true, ...extra }
+        : { tool, title: src.title, type: src.type, text: src.text, ...extra };
       const res = await fetch("/api/admin/resources/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool, title: src.title, type: src.type, text: src.text, ...extra }),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json().catch(() => ({ error: "Unexpected response" }))) as ToolResult<T>;
       if (!res.ok) {
@@ -173,8 +188,17 @@ export function ResourceAiTools({ getSource, onExcerpt, onSeo, onTags, onAppendD
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           <p className="text-sm font-semibold">AI assist</p>
-          <span className="text-xs text-muted-foreground">— generates from the title + description; review before publishing</span>
+          <span className="text-xs text-muted-foreground">
+            — generates from the {usingFile ? "attached file" : "title + description"}; review before publishing
+          </span>
         </div>
+
+        {fileId && (
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" checked={useFile} onChange={(e) => setUseFile(e.target.checked)} className="h-3.5 w-3.5" />
+            Use attached file ({attachedFile?.name || "PDF/DOCX/TXT"}) as the source
+          </label>
+        )}
 
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" disabled={!!busy} onClick={doExcerpt}>

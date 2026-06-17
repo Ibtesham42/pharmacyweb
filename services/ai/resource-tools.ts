@@ -1,7 +1,10 @@
 import { generateObject, generateText } from "ai";
 import { AiMode, AiRequestStatus } from "@prisma/client";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 import { groq } from "@/lib/ai/groq";
+import { signedDownloadUrl } from "@/lib/cloudinary";
+import { extractText } from "@/lib/ai/extract";
 import { getAiSettings } from "@/services/ai/settings";
 import { recordAssistantResult } from "@/services/ai/chat";
 import {
@@ -28,6 +31,41 @@ export interface ResourceToolInput {
   title: string;
   type?: string;
   text: string;
+}
+
+const DOC_MIME = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain",
+} as const;
+const READABLE_MIMES: string[] = [DOC_MIME.pdf, DOC_MIME.docx, DOC_MIME.txt];
+
+/**
+ * Fetch a resource's attached PROTECTED file (authenticated Cloudinary asset)
+ * via a short-lived signed URL and extract its text, so the AI tools can be
+ * grounded in the actual PDF/DOCX/TXT rather than just the description.
+ */
+export async function extractResourceFileText(fileId: string): Promise<string> {
+  const media = await prisma.media.findUnique({
+    where: { id: fileId },
+    select: { publicId: true, mimeType: true, fileName: true },
+  });
+  if (!media) throw new Error("Attached file not found");
+
+  let mime = media.mimeType;
+  if (!READABLE_MIMES.includes(mime)) {
+    const ext = media.fileName.split(".").pop()?.toLowerCase() ?? "";
+    mime = DOC_MIME[ext as keyof typeof DOC_MIME] ?? "";
+  }
+  if (!mime) throw new Error("AI can only read PDF, DOCX or TXT files");
+
+  const url = signedDownloadUrl(media.publicId, { resourceType: "raw", expiresInSec: 120, download: false });
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error("Could not read the attached file");
+  const buffer = Buffer.from(await resp.arrayBuffer());
+  const { text } = await extractText(buffer, mime);
+  if (text.trim().length < 20) throw new Error("No readable text found in the attached file");
+  return text;
 }
 
 type Ctx = { ip?: string };

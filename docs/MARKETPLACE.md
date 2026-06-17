@@ -73,13 +73,20 @@ Admin-only AI assist in the resource editor, reusing the AI module's Groq provid
 - **excerpt**, **SEO** (metaTitle + metaDescription) and **tags** → applied straight to the form fields;
 - **MCQs** and **flashcards** → previewed, then inserted into the description as Markdown.
 Nothing auto-saves — the admin reviews/edits before publishing. Files: `lib/ai/resource-tools.ts`
-(schemas + prompts), `services/ai/resource-tools.ts` (domain), `app/api/admin/resources/ai/route.ts`
+(schemas + prompts), `services/ai/resource-tools.ts` (domain + `extractResourceFileText`), `app/api/admin/resources/ai/route.ts`
 (admin-gated; checks AI `enabled` + `GROQ_API_KEY` + light per-IP rate-limit), `components/admin/resource-ai-tools.tsx`
 (in `resource-form.tsx`). Gated on Admin → AI Settings being enabled with a configured key.
+- **Grounding source:** tools use the title + description by default, or — via a "Use attached file"
+  toggle — the **attached PDF/DOCX/TXT**: the route fetches the authenticated Cloudinary asset through a
+  short-lived signed URL and runs `lib/ai/extract.ts` (`extractResourceFileText`) so MCQs/flashcards are
+  grounded in the real document.
+- **Admin analytics charts:** the Purchases tab renders proportional bar charts (most-purchased by
+  revenue, most-downloaded, revenue-by-category) via `components/admin/marketplace-analytics.tsx`
+  (pure-CSS bars off `marketplaceAnalytics()` — no chart dependency).
+- **Bookmarks UX:** `components/public/saved-resources.tsx` powers the account **Saved** tab — rich cards
+  (thumbnail/type/price/rating) with optimistic **unsave**; the three account tabs now show counts.
 
 ## Roadmap (deferred, schema-ready)
-- **Phase 2 (remaining):** generate MCQs/flashcards directly from the **attached PDF** (fetch the
-  authenticated Cloudinary asset → `extractText`), richer analytics charts, bookmarks UI polish.
 - **Phase 3:** Thesis & Research library (`/library` — abstract/citation/DOI fields already present),
   Exam-prep store (`/exam-prep`, bundles via the reserved `Order` tables), memberships/subscriptions
   (PREMIUM gating), course marketplace scaffolding (`Product.COURSE` + future `Lesson/Enrollment/Certificate`).

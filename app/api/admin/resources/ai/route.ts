@@ -11,6 +11,7 @@ import {
   suggestTags,
   generateMcqs,
   generateFlashcards,
+  extractResourceFileText,
   type ResourceToolInput,
 } from "@/services/ai/resource-tools";
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
-  const { tool, title, type, text, count } = parsed.data;
+  const { tool, title, type, text, fileId, useFile, count } = parsed.data;
 
   const settings = await getAiSettings();
   if (!settings.enabled || settings.maintenanceMode) {
@@ -49,8 +50,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "AI is not configured (missing GROQ_API_KEY)." }, { status: 503 });
   }
 
+  // Source the AI from the attached PDF/DOCX/TXT when requested, else from the typed text.
+  let source = text ?? "";
+  if (useFile && fileId) {
+    try {
+      source = await extractResourceFileText(fileId);
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Could not read the attached file." },
+        { status: 400 },
+      );
+    }
+  }
+
   const ctx = { ip };
-  const input: ResourceToolInput = { title, type, text };
+  const input: ResourceToolInput = { title, type, text: source };
 
   try {
     switch (tool) {

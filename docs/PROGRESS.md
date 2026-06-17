@@ -151,3 +151,13 @@
 ### Follow-ups
 - Requires Admin → AI Settings **enabled** + `GROQ_API_KEY` set (same as the rest of the AI module).
 - Deferred: generate MCQs/flashcards directly from the **attached PDF** (fetch the authenticated Cloudinary asset → `extractText`); analytics charts; bookmarks UI polish.
+
+## 2026-06-17 — Marketplace Phase 2: finished (PDF grounding + analytics charts + bookmarks)
+- Completed the three remaining Phase-2 items (chosen via the "Finish Phase 2" steer).
+- **PDF-grounded AI:** the resource AI tools can now generate from the **attached PDF/DOCX/TXT** instead of just the description. New `extractResourceFileText(fileId)` in `services/ai/resource-tools.ts` loads the `Media` row, builds a ~120s `signedDownloadUrl` for the authenticated Cloudinary asset, fetches the bytes and runs `lib/ai/extract.ts` (mime inferred from `fileName` when the stored mimeType is generic). The admin route accepts `{ useFile, fileId }`; `resourceAiSchema` now makes `text` optional when a file is used (refine). UI: a "Use attached file" checkbox in `resource-ai-tools.tsx` (shown only when a file is attached), wired from `resource-form.tsx`.
+- **Admin analytics charts:** new `components/admin/marketplace-analytics.tsx` renders proportional pure-CSS bars (most-purchased by revenue, most-downloaded, revenue-by-category) from the existing `marketplaceAnalytics()` data; replaced the plain text rows on the Purchases tab. No charting dependency.
+- **Bookmarks polish:** new client `components/public/saved-resources.tsx` — rich Saved cards (thumbnail/type/price/rating) with optimistic **unsave** (reuses the bookmark toggle route); account tabs now show counts. `listBuyerBookmarks` already returned the needed fields.
+- Verified: `typecheck`, `lint` green; build run.
+
+### Follow-ups
+- Phase 3 remains: thesis library (`/library`), memberships/PREMIUM gating, exam-prep bundles (reserved `Order` tables).

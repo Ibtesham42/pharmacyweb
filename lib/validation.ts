@@ -242,13 +242,20 @@ export const aiRecommendSchema = z.object({
 
 // Admin AI resource-authoring tools (admin-gated — no public clientId).
 export const resourceAiToolSchema = z.enum(["excerpt", "seo", "tags", "mcqs", "flashcards"]);
-export const resourceAiSchema = z.object({
-  tool: resourceAiToolSchema,
-  title: z.string().min(3, "Add a title first").max(200),
-  type: z.string().max(40).optional(),
-  text: z.string().min(20, "Add more description text for the AI to work with").max(40_000),
-  count: z.coerce.number().int().min(1).max(20).optional(),
-});
+export const resourceAiSchema = z
+  .object({
+    tool: resourceAiToolSchema,
+    title: z.string().min(3, "Add a title first").max(200),
+    type: z.string().max(40).optional(),
+    text: z.string().max(40_000).optional(),
+    fileId: z.string().min(1).max(64).optional(),
+    useFile: z.boolean().optional(),
+    count: z.coerce.number().int().min(1).max(20).optional(),
+  })
+  .refine((d) => (d.useFile && d.fileId) || (d.text?.trim().length ?? 0) >= 20, {
+    message: "Add a longer description, or attach a file and use it as the source.",
+    path: ["text"],
+  });
 export type ResourceAiTool = z.infer<typeof resourceAiToolSchema>;
 export type ResourceAiInput = z.infer<typeof resourceAiSchema>;
 

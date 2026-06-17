@@ -4,6 +4,7 @@ import { listPurchases, marketplaceAnalytics } from "@/services/resource-purchas
 import { pendingReviewCount } from "@/services/resource-reviews";
 import { ResourceAdminTabs } from "@/components/admin/resource-admin-tabs";
 import { ResourcePurchasesTable } from "@/components/admin/resource-purchases-table";
+import { MarketplaceAnalytics } from "@/components/admin/marketplace-analytics";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatINR } from "@/lib/format";
 import { safe } from "@/lib/utils";
@@ -67,53 +68,11 @@ export default async function ResourcePurchasesPage({
 
       <ResourcePurchasesTable purchases={list.items} />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="mb-2 text-sm font-semibold">Most purchased</h3>
-            {stats.topPurchased.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No data yet.</p>
-            ) : (
-              stats.topPurchased.map((t, i) => (
-                <div key={i} className="flex justify-between py-0.5 text-sm">
-                  <span className="truncate">{t.title}</span>
-                  <span className="font-medium">{formatINR(t.revenue)} ({t.count})</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="mb-2 text-sm font-semibold">Most downloaded</h3>
-            {stats.mostDownloaded.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No data yet.</p>
-            ) : (
-              stats.mostDownloaded.map((t) => (
-                <div key={t.id} className="flex justify-between py-0.5 text-sm">
-                  <span className="truncate">{t.title}</span>
-                  <span className="font-medium">{t.downloadCount}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="mb-2 text-sm font-semibold">Revenue by category</h3>
-            {stats.revenueByCategory.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No data yet.</p>
-            ) : (
-              stats.revenueByCategory.map((t, i) => (
-                <div key={i} className="flex justify-between py-0.5 text-sm">
-                  <span className="truncate">{t.name}</span>
-                  <span className="font-medium">{formatINR(t.total)}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <MarketplaceAnalytics
+        topPurchased={stats.topPurchased}
+        mostDownloaded={stats.mostDownloaded}
+        revenueByCategory={stats.revenueByCategory}
+      />
     </div>
   );
 }

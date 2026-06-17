@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Download, Receipt, Bookmark, ShoppingBag, Clock } from "lucide-react";
+import { Download, Receipt, ShoppingBag, Clock } from "lucide-react";
 import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { AccountLogoutButton } from "@/components/public/account-logout-button";
+import { SavedResources } from "@/components/public/saved-resources";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -43,9 +44,9 @@ export default async function AccountPage() {
 
       <Tabs defaultValue="purchases" className="mt-6">
         <TabsList>
-          <TabsTrigger value="purchases">Purchases</TabsTrigger>
-          <TabsTrigger value="saved">Saved</TabsTrigger>
-          <TabsTrigger value="downloads">Downloads</TabsTrigger>
+          <TabsTrigger value="purchases">Purchases{purchases.length ? ` (${purchases.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="saved">Saved{bookmarks.length ? ` (${bookmarks.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="downloads">Downloads{downloads.length ? ` (${downloads.length})` : ""}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="purchases" className="space-y-3">
@@ -80,24 +81,7 @@ export default async function AccountPage() {
         </TabsContent>
 
         <TabsContent value="saved" className="space-y-3">
-          {bookmarks.length === 0 ? (
-            <Empty icon={Bookmark} text="No saved resources yet." />
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {bookmarks.map((r) => (
-                <Card key={r.id}>
-                  <CardContent className="flex items-center justify-between gap-3 p-4">
-                    <Link href={`/store/${r.slug}`} className="font-medium hover:underline">
-                      {r.title}
-                    </Link>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {r.access === "FREE" ? "Free" : formatINR(r.pricePaise)}
-                    </span>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <SavedResources initial={bookmarks} />
         </TabsContent>
 
         <TabsContent value="downloads" className="space-y-2">

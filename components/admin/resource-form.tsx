@@ -248,6 +248,7 @@ export function ResourceForm({
               type: RESOURCE_TYPE_LABELS[s.type],
               text: [s.description, isResearch ? s.abstract : ""].filter(Boolean).join("\n\n"),
             })}
+            attachedFile={{ id: s.file.id, name: s.file.fileName }}
             onExcerpt={(excerpt) => set("excerpt", excerpt.slice(0, 300))}
             onSeo={(seo) =>
               setS((p) => ({

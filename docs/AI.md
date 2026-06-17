@@ -37,7 +37,7 @@ search, multilingual, voice/STT/TTS, camera medicine scanner, barcode scanner, d
 | Domain logic | `services/ai/{settings,chat,usage,conversations}.ts` |
 | API | `app/api/ai/chat/route.ts` (multimodal streaming), `app/api/ai/extract/route.ts` (doc text), `app/api/ai/conversations/route.ts` |
 | Career Copilot | `lib/ai/career.ts`, `services/ai/career.ts`, `app/api/ai/career/*`, `app/(public)/copilot`, `components/public/career-copilot.tsx` |
-| Resource authoring tools (admin) | `lib/ai/resource-tools.ts`, `services/ai/resource-tools.ts`, `app/api/admin/resources/ai/route.ts`, `components/admin/resource-ai-tools.tsx` (in `resource-form.tsx`) |
+| Resource authoring tools (admin) | `lib/ai/resource-tools.ts`, `services/ai/resource-tools.ts` (+ `extractResourceFileText` → reads the attached PDF/DOCX/TXT via a signed URL + `lib/ai/extract.ts`), `app/api/admin/resources/ai/route.ts`, `components/admin/resource-ai-tools.tsx` (in `resource-form.tsx`) |
 | Admin UI | `app/admin/(panel)/ai/{page,actions}.tsx`, `components/admin/ai-settings-form.tsx` |
 | Public UI | `app/(public)/ai/page.tsx`, `components/public/{ai-chat,ai-chat-fab,ai-disclaimer}.tsx` |
 | DB | `prisma/schema.prisma` — `AiConversation`, `AiMessage`, `AiRequestLog`, `AiKnowledgeFile` + enums |
