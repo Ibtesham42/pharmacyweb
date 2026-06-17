@@ -69,6 +69,7 @@ export default async function MembershipPage() {
           durationDays: p.durationDays,
           pricePaise: p.pricePaise,
           badge: p.badge,
+          benefits: p.benefits,
         }))}
         razorpayAvailable={isRazorpayConfigured()}
         upiAvailable={settings.upiFallbackEnabled && Boolean(settings.upiId)}

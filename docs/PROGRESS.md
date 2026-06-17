@@ -227,3 +227,13 @@
 ### Follow-ups
 - Phase 3: admin user management (suspend, grant/revoke Premium, activity) + membership tiers/benefits in the admin manager.
 - Optional: header notification bell with unread count; deep-link AI Chats to reopen a specific conversation.
+
+## 2026-06-18 — Auth Phase 3: admin user management + membership tiers (epic complete)
+- **Code-only** (no migration — uses `User.status`, `Membership`, `MembershipPlan.tier/benefits` from migration 9).
+- **Admin Users:** `/admin/users` (search + role/status filters + pagination) and `/admin/users/[id]` (activity: purchase/download/membership counts + recent downloads). `services/admin-users.ts` (`listUsers`, `getUserDetail`, `setUserStatus`, `activeMemberCountTotal`). Added **Users** to the admin nav.
+- **Actions** (`app/admin/(panel)/users/actions.ts`, requireAdmin + audit): suspend/reactivate (guards: can't suspend an ADMIN or self; suspended users blocked at `authorize`), grant/extend & revoke comp PREMIUM (`grantCompMembership`/`revokeMembership` in `services/memberships.ts`). UI `components/admin/user-admin-actions.tsx`.
+- **Membership tiers/benefits:** `membershipPlanSchema` + `createPlan`/`updatePlan` now carry `tier` (FREE/PREMIUM/VIP) + `benefits[]`; editable in `membership-plans-manager.tsx` and shown on `/membership` cards.
+- **Verified (dev):** admin → `/admin/users` 200, user detail 200; USER → `/admin/users` 302→`/account`; **suspended user login blocked**; seed admin intact; typecheck/lint/build green. Test accounts cleaned up (note: used `@example.com` domain for safe cleanup — Prisma `startsWith:'adm_'` treats `_` as a SQL LIKE wildcard, which would also match `admin@…`).
+
+### Follow-ups
+- Optional: header notification bell (unread count); deep-link AI Chats to reopen a conversation; enforce email verification (`User.emailVerified`).

@@ -13,6 +13,7 @@ import {
   ResourceAccess,
   ResourceStatus,
   ReviewStatus,
+  MembershipTier,
 } from "@prisma/client";
 
 // ─────────────────────────── Auth ───────────────────────────
@@ -446,6 +447,8 @@ export const membershipPlanSchema = z.object({
   durationDays: z.coerce.number().int().min(1, "Duration must be at least 1 day").max(3650),
   pricePaise: z.coerce.number().int().min(100, "Set a price of at least ₹1").max(5_000_000),
   badge: optStr(40),
+  tier: z.nativeEnum(MembershipTier).default(MembershipTier.PREMIUM),
+  benefits: z.array(z.string().min(1).max(160)).max(12).default([]),
   active: z.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
 });

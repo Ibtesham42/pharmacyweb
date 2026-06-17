@@ -17,6 +17,7 @@ export interface MembershipPlanView {
   durationDays: number;
   pricePaise: number;
   badge: string | null;
+  benefits: string[];
 }
 
 const PERKS = [
@@ -72,6 +73,15 @@ export function MembershipPlans({
               <p className="text-2xl font-bold">{formatINR(p.pricePaise)}</p>
               <p className="text-sm text-muted-foreground">{durationLabel(p.durationDays)} of PREMIUM</p>
               {p.description && <p className="text-sm text-muted-foreground">{p.description}</p>}
+              {p.benefits.length > 0 && (
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {p.benefits.map((b) => (
+                    <li key={b} className="flex items-start gap-2">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {b}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <Button
                 className="mt-auto"
                 variant={selected?.id === p.id ? "secondary" : "default"}

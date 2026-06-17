@@ -8,8 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatINR } from "@/lib/format";
 import { durationLabel } from "@/lib/marketplace/config";
 import { createPlanAction, updatePlanAction, deletePlanAction } from "@/app/admin/(panel)/resources/memberships/actions";
@@ -21,6 +29,8 @@ export interface PlanRow {
   durationDays: number;
   pricePaise: number;
   badge: string | null;
+  tier: string;
+  benefits: string[];
   active: boolean;
   sortOrder: number;
 }
@@ -31,11 +41,23 @@ type Draft = {
   durationDays: string;
   priceRupees: string;
   badge: string;
+  tier: string;
+  benefits: string; // one per line in the form
   active: boolean;
   sortOrder: string;
 };
 
-const emptyDraft: Draft = { name: "", description: "", durationDays: "30", priceRupees: "", badge: "", active: true, sortOrder: "0" };
+const emptyDraft: Draft = {
+  name: "",
+  description: "",
+  durationDays: "30",
+  priceRupees: "",
+  badge: "",
+  tier: "PREMIUM",
+  benefits: "",
+  active: true,
+  sortOrder: "0",
+};
 
 export function MembershipPlansManager({ plans }: { plans: PlanRow[] }) {
   const router = useRouter();
@@ -54,6 +76,8 @@ export function MembershipPlansManager({ plans }: { plans: PlanRow[] }) {
       durationDays: String(p.durationDays),
       priceRupees: String(Math.round(p.pricePaise / 100)),
       badge: p.badge ?? "",
+      tier: p.tier,
+      benefits: p.benefits.join("\n"),
       active: p.active,
       sortOrder: String(p.sortOrder),
     });
@@ -74,6 +98,11 @@ export function MembershipPlansManager({ plans }: { plans: PlanRow[] }) {
       durationDays: Number(d.durationDays),
       pricePaise: Math.round(Number(d.priceRupees) * 100),
       badge: d.badge,
+      tier: d.tier,
+      benefits: d.benefits
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
       active: d.active,
       sortOrder: Number(d.sortOrder || 0),
     };
@@ -130,6 +159,18 @@ export function MembershipPlansManager({ plans }: { plans: PlanRow[] }) {
               <Field label="Sort order">
                 <Input type="number" min={0} value={d.sortOrder} onChange={(e) => set("sortOrder", e.target.value)} />
               </Field>
+              <Field label="Tier">
+                <Select value={d.tier} onValueChange={(v) => set("tier", v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FREE">Free</SelectItem>
+                    <SelectItem value="PREMIUM">Premium</SelectItem>
+                    <SelectItem value="VIP">VIP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
               <div className="flex items-end">
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={d.active} onCheckedChange={(v) => set("active", v)} /> Active (shown publicly)
@@ -138,6 +179,14 @@ export function MembershipPlansManager({ plans }: { plans: PlanRow[] }) {
             </div>
             <Field label="Description (optional)">
               <Input value={d.description} onChange={(e) => set("description", e.target.value)} maxLength={300} />
+            </Field>
+            <Field label="Benefits (one per line)">
+              <Textarea
+                value={d.benefits}
+                onChange={(e) => set("benefits", e.target.value)}
+                rows={4}
+                placeholder={"All-access downloads\nExclusive PREMIUM material\nPriority support"}
+              />
             </Field>
             <div className="flex gap-2">
               <Button onClick={save} disabled={busy}>Save plan</Button>

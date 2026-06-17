@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ensureBuyer } from "@/services/buyers";
 import type { MembershipPlanInput } from "@/lib/validation";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -27,6 +28,8 @@ export function createPlan(input: MembershipPlanInput) {
       durationDays: input.durationDays,
       pricePaise: input.pricePaise,
       badge: input.badge || null,
+      tier: input.tier,
+      benefits: input.benefits,
       active: input.active,
       sortOrder: input.sortOrder,
     },
@@ -42,6 +45,8 @@ export function updatePlan(id: string, input: MembershipPlanInput) {
       durationDays: input.durationDays,
       pricePaise: input.pricePaise,
       badge: input.badge || null,
+      tier: input.tier,
+      benefits: input.benefits,
       active: input.active,
       sortOrder: input.sortOrder,
     },
@@ -110,4 +115,25 @@ export async function grantMembershipForPurchase(purchaseId: string): Promise<vo
     update: { planId: p.planId, expiresAt },
     create: { buyerId, planId: p.planId, startedAt: now, expiresAt },
   });
+}
+
+/** Admin: grant/extend a complimentary PREMIUM membership for an email (no payment). */
+export async function grantCompMembership(email: string, durationDays: number) {
+  const buyer = await ensureBuyer(email);
+  const now = new Date();
+  const existing = await prisma.membership.findUnique({ where: { buyerId: buyer.id } });
+  const base = existing && existing.expiresAt > now ? existing.expiresAt : now;
+  const expiresAt = new Date(base.getTime() + durationDays * DAY_MS);
+  return prisma.membership.upsert({
+    where: { buyerId: buyer.id },
+    update: { expiresAt },
+    create: { buyerId: buyer.id, startedAt: now, expiresAt },
+  });
+}
+
+/** Admin: revoke PREMIUM by expiring the membership now. */
+export async function revokeMembership(email: string) {
+  const buyer = await prisma.buyer.findUnique({ where: { email: email.toLowerCase() }, select: { id: true } });
+  if (!buyer) return;
+  await prisma.membership.updateMany({ where: { buyerId: buyer.id }, data: { expiresAt: new Date() } });
 }

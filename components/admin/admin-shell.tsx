@@ -17,6 +17,7 @@ import {
   Package,
   Settings,
   UserCog,
+  Users,
   LogOut,
   ExternalLink,
   Menu,
@@ -38,6 +39,7 @@ const NAV = [
   { href: "/admin/ai", label: "AI Settings", icon: Bot },
   { href: "/admin/donations", label: "Donations", icon: Heart },
   { href: "/admin/resources", label: "Resources", icon: Package },
+  { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/account", label: "Account", icon: UserCog },
 ];

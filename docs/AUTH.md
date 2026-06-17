@@ -78,8 +78,18 @@ Migration `11_add_saved_and_notifications` adds `PostBookmark` (saved jobs/artic
 - **Notifications:** `services/notifications.ts` (`notifyByEmail`); the resource/bundle/membership receipt
   functions create a notification on PAID; dashboard **Notifications** tab + `POST /api/account/notifications/read`.
 
+## Phase 3 — admin user management + membership tiers (shipped)
+Code-only (uses `User.status` + `Membership` + `MembershipPlan.tier/benefits` from migration `9`).
+- **`/admin/users`** (list + role/status filters + search) and **`/admin/users/[id]`** (activity: purchase/
+  download/membership counts + recent downloads). `services/admin-users.ts` (`listUsers`, `getUserDetail`,
+  `setUserStatus`). Admin nav gains **Users**.
+- **Actions** (`app/admin/(panel)/users/actions.ts`, requireAdmin + audit): suspend/reactivate
+  (`setUserStatusAction` — can't suspend an ADMIN or yourself; suspended users are rejected at `authorize`),
+  grant/extend & revoke comp PREMIUM (`grantCompMembership`/`revokeMembership` in `services/memberships.ts`,
+  by email → bridged Buyer). UI: `components/admin/user-admin-actions.tsx`.
+- **Membership tiers/benefits:** `MembershipPlan.tier` (FREE/PREMIUM/VIP) + `benefits[]` are now editable in
+  `components/admin/membership-plans-manager.tsx` and shown on the `/membership` plan cards.
+
 ## Roadmap
-- **Phase 3:** Admin user management (`/admin/users`: suspend/reactivate, grant/revoke Premium, activity), and
-  membership tiers/benefits surfaced in the admin plans manager + `/membership`.
 - Email verification is scaffolded (`User.emailVerified`) and can be enforced later. A header notification bell
-  (unread count) is a possible follow-up.
+  (unread count) and deep-linking the AI Chats list to reopen a conversation are possible follow-ups.
