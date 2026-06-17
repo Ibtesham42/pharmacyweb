@@ -132,3 +132,12 @@
 - **Apply migration `6_add_marketplace` to Neon + seed** (pending — needs explicit go-ahead): `npm run db:deploy && npm run db:seed`. Vercel `vercel-build` applies it automatically on deploy.
 - Enable in Admin → Resources → Settings; set `RESEND_API_KEY` + `BUYER_AUTH_SECRET` for production magic-link/receipts; register the `/api/razorpay/resource-webhook` URL.
 - Deferred (designed): AI resource tools, thesis library, exam-prep store + bundles, memberships, course marketplace (see `docs/MARKETPLACE.md`).
+
+## 2026-06-17 — Marketplace Phase 1: resume + go-live data step
+- Resumed the Digital Resources Marketplace; reviewed all Phase-1 files and re-verified each layer before changing anything: `typecheck`, `lint`, `build` all green; `prisma validate` OK; `prisma migrate status` → **"Database schema is up to date"** (migration `6_add_marketplace` is **already applied** to Neon — the prior "pending apply" follow-up is now resolved, applied via deploy).
+- Audited payments (Razorpay `/verify` signature + idempotent `resource-webhook`; UPI manual flow), secure delivery (entitlement check → ~90s signed Cloudinary URL + HMAC re-download tokens), buyer auth (hashed magic-link/OTP, httpOnly HMAC cookie), admin actions (requireAdmin + audit + revalidate) and analytics (`marketplaceAnalytics`) — all complete and correct; no stubs/TODOs in marketplace code.
+- **Live-DB gap found + fixed:** `ResourceCategory` count was **0** (categories had never been seeded, though the `marketplace` SiteSetting existed). Seeded the 14 starter resource categories **surgically** (idempotent upsert of only `seedResourceCategories`) rather than running the full `npm run db:seed`, because `seedSettings()` upserts `homepage`/`contact` with `update:{value}` and would have clobbered any admin-customized values on prod. Verified: `ResourceCategory` count = 14.
+
+### Follow-ups
+- Remaining go-live steps are Vercel/admin config only (no code): set `RESEND_API_KEY` + `MARKETPLACE_FROM_EMAIL` + `BUYER_AUTH_SECRET`; register the `/api/razorpay/resource-webhook` URL; in Admin → Resources → Settings set UPI id/QR (store is already `enabled`). Then publish the first resources.
+- Deferred (schema-ready): Phase 2 AI resource tools + analytics charts; Phase 3 thesis library, exam-prep bundles, memberships, course marketplace (see `docs/MARKETPLACE.md`).
