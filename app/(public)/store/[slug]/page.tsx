@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { Download, FileText, Star, Tag as TagIcon, Lock } from "lucide-react";
+import { Download, FileText, Star, Tag as TagIcon, Lock, Calendar } from "lucide-react";
 import { ResourceAccess } from "@prisma/client";
 import { getResourceBySlug, hasEntitlement, hasDownloaded } from "@/services/resources";
 import { listApprovedReviews, getBuyerReview } from "@/services/resource-reviews";
@@ -17,13 +17,14 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { RatingStars } from "@/components/public/rating-stars";
 import { ReviewForm } from "@/components/public/review-form";
 import { BookmarkButton } from "@/components/public/bookmark-button";
+import { CitationBlock } from "@/components/public/citation-block";
 import { ResourcePurchaseForm } from "@/components/public/resource-purchase-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatINR, formatDate } from "@/lib/format";
-import { RESOURCE_TYPE_LABELS, avgRating, formatBytes } from "@/lib/marketplace/config";
-import { buildMetadata, resourceJsonLd, breadcrumbJsonLd } from "@/lib/seo";
+import { RESOURCE_TYPE_LABELS, RESEARCH_TYPES, avgRating, formatBytes } from "@/lib/marketplace/config";
+import { buildMetadata, resourceJsonLd, scholarlyArticleJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -63,12 +64,19 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
   const upiAvailable = settings.upiFallbackEnabled && Boolean(settings.upiId);
   const canReview =
     Boolean(buyer) && (r.access === ResourceAccess.PAID ? entitled : r.access === ResourceAccess.FREE && downloaded);
+  const isResearch = RESEARCH_TYPES.includes(r.type);
 
-  const crumbs = [
-    { name: "Home", path: "/" },
-    { name: "Store", path: "/store" },
-    { name: r.title, path: `/store/${r.slug}` },
-  ];
+  const crumbs = isResearch
+    ? [
+        { name: "Home", path: "/" },
+        { name: "Research Library", path: "/library" },
+        { name: r.title, path: `/store/${r.slug}` },
+      ]
+    : [
+        { name: "Home", path: "/" },
+        { name: "Store", path: "/store" },
+        { name: r.title, path: `/store/${r.slug}` },
+      ];
 
   return (
     <div className="container py-8">
@@ -84,6 +92,20 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
             ratingValue: rating,
             ratingCount: r.ratingCount,
           }),
+          ...(isResearch
+            ? [
+                scholarlyArticleJsonLd({
+                  title: r.title,
+                  description: r.abstract || r.excerpt || r.metaDescription || r.title,
+                  slug: r.slug,
+                  image: r.previewImages[0],
+                  authorName: r.author,
+                  datePublished: r.publishedAt,
+                  publishedYear: r.publishedYear,
+                  doi: r.doi,
+                }),
+              ]
+            : []),
           breadcrumbJsonLd(crumbs),
         ]}
       />
@@ -127,9 +149,10 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
             <div className="mt-6 rounded-lg border bg-muted/30 p-4">
               <h2 className="text-sm font-semibold">Abstract</h2>
               <p className="mt-1 text-sm text-muted-foreground">{r.abstract}</p>
-              {r.citation && <p className="mt-2 text-xs text-muted-foreground">Cite as: {r.citation}</p>}
             </div>
           )}
+
+          {isResearch && <CitationBlock citation={r.citation} doi={r.doi} />}
 
           <div className="prose-sm mt-6 max-w-none">
             <Markdown content={r.description} />
@@ -215,6 +238,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                 {r.fileType && <Meta icon={FileText} label="Format" value={r.fileType} />}
                 {r.fileSizeBytes ? <Meta icon={Download} label="Size" value={formatBytes(r.fileSizeBytes)} /> : null}
                 {r.pageCount ? <Meta icon={FileText} label="Pages" value={String(r.pageCount)} /> : null}
+                {isResearch && r.publishedYear ? <Meta icon={Calendar} label="Year" value={String(r.publishedYear)} /> : null}
                 {r.ratingCount > 0 && <Meta icon={Star} label="Rating" value={`${rating} / 5`} />}
               </dl>
             </CardContent>

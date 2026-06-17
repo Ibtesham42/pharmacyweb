@@ -161,3 +161,13 @@
 
 ### Follow-ups
 - Phase 3 remains: thesis library (`/library`), memberships/PREMIUM gating, exam-prep bundles (reserved `Order` tables).
+
+## 2026-06-17 — Marketplace Phase 3 (start): Thesis & Research Library
+- Started Phase 3 with the Thesis & Research Library (user-selected track). Additive — **no migration**; reuses the `RESEARCH_PAPER`/`THESIS` resource types and the existing `abstract`/`citation`/`doi`/`publishedYear` fields.
+- **Public `/library`:** listing of research/thesis resources with **year** + **subject** filters and title/author/abstract search, research-oriented cards. New `app/(public)/library/{page,loading}.tsx`, `components/public/{research-card,research-filters}.tsx`. Service: `listResearchResources` + `getResearchYears` + `RESEARCH_RESOURCE_TYPES` in `services/resources.ts` (orderBy publishedYear desc NULLS LAST, then publishedAt).
+- **Detail (canonical stays `/store/[slug]` — no duplicate URLs):** for research types the page now renders a **"How to cite"** block (copy citation + DOI link, `components/public/citation-block.tsx`), a publication-year meta row, a library-rooted breadcrumb, and **ScholarlyArticle** JSON-LD (`scholarlyArticleJsonLd` in `lib/seo.ts`) alongside the existing Product schema.
+- Added **Library** to the header nav and `/library` to `sitemap.ts`.
+- Verified: `typecheck`, `lint` green; build run.
+
+### Follow-ups
+- Phase 3 remaining: exam-prep store + bundles (reserved `Order`/`OrderItem` tables), memberships/PREMIUM subscriptions, course scaffolding.

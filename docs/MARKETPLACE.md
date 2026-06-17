@@ -86,7 +86,17 @@ Nothing auto-saves — the admin reviews/edits before publishing. Files: `lib/ai
 - **Bookmarks UX:** `components/public/saved-resources.tsx` powers the account **Saved** tab — rich cards
   (thumbnail/type/price/rating) with optimistic **unsave**; the three account tabs now show counts.
 
+## Phase 3 — Thesis & Research Library (shipped 2026-06-17)
+A dedicated `/library` view over the existing `RESEARCH_PAPER` + `THESIS` resources (reusing the
+`abstract`/`citation`/`doi`/`publishedYear` fields — **no migration**). Listing with **year** + **subject**
+filters and title/author/abstract search (`listResearchResources` + `getResearchYears`,
+`RESEARCH_RESOURCE_TYPES` in `services/resources.ts`); `components/public/{research-card,research-filters}.tsx`.
+Detail pages stay canonical at `/store/[slug]` (no duplicate URLs) but, for research types, gain a
+**"How to cite"** block with copy + DOI link (`components/public/citation-block.tsx`), a publication-year
+meta row, a library-rooted breadcrumb, and **ScholarlyArticle** JSON-LD (`scholarlyArticleJsonLd` in
+`lib/seo.ts`) alongside the Product schema. Added to the header nav + `sitemap.ts`.
+
 ## Roadmap (deferred, schema-ready)
-- **Phase 3:** Thesis & Research library (`/library` — abstract/citation/DOI fields already present),
-  Exam-prep store (`/exam-prep`, bundles via the reserved `Order` tables), memberships/subscriptions
-  (PREMIUM gating), course marketplace scaffolding (`Product.COURSE` + future `Lesson/Enrollment/Certificate`).
+- **Phase 3 (remaining):** Exam-prep store (`/exam-prep`, bundles via the reserved `Order` tables),
+  memberships/subscriptions (PREMIUM gating), course marketplace scaffolding (`Product.COURSE` +
+  future `Lesson/Enrollment/Certificate`).

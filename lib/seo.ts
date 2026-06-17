@@ -201,6 +201,48 @@ export function articleJsonLd(p: ArticleLdInput): JsonLd {
   };
 }
 
+interface ScholarlyLdInput {
+  title: string;
+  description: string;
+  slug: string;
+  image?: string | null;
+  authorName?: string | null;
+  datePublished?: Date | null;
+  publishedYear?: number | null;
+  doi?: string | null;
+}
+
+/** schema.org ScholarlyArticle for a thesis / research-paper resource. */
+export function scholarlyArticleJsonLd(p: ScholarlyLdInput): JsonLd {
+  const url = absoluteUrl(`/store/${p.slug}`);
+  const ld: JsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    headline: p.title,
+    name: p.title,
+    description: p.description,
+    image: p.image ? [p.image] : undefined,
+    url,
+    mainEntityOfPage: url,
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      logo: { "@type": "ImageObject", url: absoluteUrl("/icon.svg") },
+    },
+    ...(p.authorName ? { author: { "@type": "Person", name: p.authorName } } : {}),
+    ...(p.datePublished
+      ? { datePublished: p.datePublished.toISOString() }
+      : p.publishedYear
+        ? { datePublished: String(p.publishedYear) }
+        : {}),
+  };
+  if (p.doi) {
+    ld.sameAs = `https://doi.org/${p.doi}`;
+    ld.identifier = { "@type": "PropertyValue", propertyID: "DOI", value: p.doi };
+  }
+  return ld;
+}
+
 interface ResourceLdInput {
   title: string;
   description: string;

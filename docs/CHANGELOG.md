@@ -29,6 +29,8 @@ All notable changes to this project are documented here (format: [Keep a Changel
 - **Marketplace admin analytics charts:** the Resources → Purchases tab now shows proportional **bar charts** for most-purchased (by revenue), most-downloaded, and revenue-by-category (no charting dependency).
 - **Saved resources (bookmarks) polish:** the My Account **Saved** tab now shows rich cards (thumbnail, type, price, rating) with one-tap **unsave**; the Purchases / Saved / Downloads tabs display item counts.
 
+- **Thesis & Research Library (Marketplace Phase 3):** a dedicated `/library` for research papers and theses — filter by **year** and **subject**, search title/author/abstract, with research-oriented cards (type, year, author, abstract). Resource detail pages for research items gain a proper **"How to cite"** block (copy citation + DOI link), a **publication year**, a library-rooted breadcrumb, and **ScholarlyArticle** structured data (alongside the Product schema). Added to the nav and sitemap.
+
 ### Changed
 - Content cards now always show a visual header (featured image, or a branded placeholder for jobs without one) plus a clickable "View details" action.
 

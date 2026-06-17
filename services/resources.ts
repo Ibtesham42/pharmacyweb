@@ -1,7 +1,13 @@
-import { Prisma, ResourceStatus, ResourceAccess } from "@prisma/client";
+import { Prisma, ResourceStatus, ResourceAccess, ResourceType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toSlug, uniqueSlug } from "@/lib/slug";
 import type { ResourceInput } from "@/lib/validation";
+
+/** Resource types that make up the Thesis & Research library. */
+export const RESEARCH_RESOURCE_TYPES: ResourceType[] = [
+  ResourceType.RESEARCH_PAPER,
+  ResourceType.THESIS,
+];
 
 const slugExists = (slug: string, exceptId?: string) =>
   prisma.resource
@@ -226,6 +232,84 @@ export async function getPublishedResourceSlugs(): Promise<string[]> {
     take: 1000,
   });
   return rows.map((r) => r.slug);
+}
+
+// ─────────────────────────── Research / Thesis library ───────────────────────────
+
+const RESEARCH_CARD_SELECT = {
+  id: true,
+  title: true,
+  slug: true,
+  type: true,
+  access: true,
+  pricePaise: true,
+  excerpt: true,
+  abstract: true,
+  author: true,
+  doi: true,
+  publishedYear: true,
+  previewImages: true,
+  downloadCount: true,
+  ratingSum: true,
+  ratingCount: true,
+  publishedAt: true,
+  category: { select: { name: true, slug: true } },
+} satisfies Prisma.ResourceSelect;
+
+export type ResearchCard = Prisma.ResourceGetPayload<{ select: typeof RESEARCH_CARD_SELECT }>;
+
+export interface ResearchListOpts {
+  year?: number;
+  categoryId?: string;
+  q?: string;
+  page?: number;
+  perPage?: number;
+}
+
+export async function listResearchResources(opts: ResearchListOpts) {
+  const page = Math.max(1, opts.page ?? 1);
+  const perPage = opts.perPage ?? 12;
+  const where: Prisma.ResourceWhereInput = {
+    status: ResourceStatus.PUBLISHED,
+    deletedAt: null,
+    type: { in: RESEARCH_RESOURCE_TYPES },
+    ...(opts.year && { publishedYear: opts.year }),
+    ...(opts.categoryId && { categoryId: opts.categoryId }),
+    ...(opts.q && {
+      OR: [
+        { title: { contains: opts.q, mode: "insensitive" } },
+        { abstract: { contains: opts.q, mode: "insensitive" } },
+        { author: { contains: opts.q, mode: "insensitive" } },
+      ],
+    }),
+  };
+  const [items, total] = await Promise.all([
+    prisma.resource.findMany({
+      where,
+      orderBy: [{ publishedYear: { sort: "desc", nulls: "last" } }, { publishedAt: "desc" }],
+      skip: (page - 1) * perPage,
+      take: perPage,
+      select: RESEARCH_CARD_SELECT,
+    }),
+    prisma.resource.count({ where }),
+  ]);
+  return { items, total, page, perPage, pages: Math.max(1, Math.ceil(total / perPage)) };
+}
+
+/** Distinct publication years present in the library (for the year filter). */
+export async function getResearchYears(): Promise<number[]> {
+  const rows = await prisma.resource.findMany({
+    where: {
+      status: ResourceStatus.PUBLISHED,
+      deletedAt: null,
+      type: { in: RESEARCH_RESOURCE_TYPES },
+      publishedYear: { not: null },
+    },
+    select: { publishedYear: true },
+    distinct: ["publishedYear"],
+    orderBy: { publishedYear: "desc" },
+  });
+  return rows.map((r) => r.publishedYear).filter((y): y is number => y != null);
 }
 
 export async function getResourceBySlug(slug: string) {
