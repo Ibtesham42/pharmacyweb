@@ -25,6 +25,7 @@ import {
   ResourceFileUploadField,
   type ResourceFileValue,
 } from "@/components/admin/resource-file-upload-field";
+import { ResourceAiTools } from "@/components/admin/resource-ai-tools";
 import { uploadToCloudinary } from "@/lib/upload-client";
 import { toSlug } from "@/lib/slug";
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPES, RESEARCH_TYPES } from "@/lib/marketplace/config";
@@ -240,6 +241,26 @@ export function ResourceForm({
               </Field>
             </CardContent>
           </Card>
+
+          <ResourceAiTools
+            getSource={() => ({
+              title: s.title,
+              type: RESOURCE_TYPE_LABELS[s.type],
+              text: [s.description, isResearch ? s.abstract : ""].filter(Boolean).join("\n\n"),
+            })}
+            onExcerpt={(excerpt) => set("excerpt", excerpt.slice(0, 300))}
+            onSeo={(seo) =>
+              setS((p) => ({
+                ...p,
+                metaTitle: seo.metaTitle.slice(0, 120),
+                metaDescription: seo.metaDescription.slice(0, 300),
+              }))
+            }
+            onTags={(tags) => setS((p) => ({ ...p, tags: Array.from(new Set([...p.tags, ...tags])) }))}
+            onAppendDescription={(md) =>
+              setS((p) => ({ ...p, description: p.description ? `${p.description}\n\n${md}` : md }))
+            }
+          />
 
           {isResearch && (
             <Card>

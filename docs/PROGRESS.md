@@ -141,3 +141,13 @@
 ### Follow-ups
 - Remaining go-live steps are Vercel/admin config only (no code): set `RESEND_API_KEY` + `MARKETPLACE_FROM_EMAIL` + `BUYER_AUTH_SECRET`; register the `/api/razorpay/resource-webhook` URL; in Admin → Resources → Settings set UPI id/QR (store is already `enabled`). Then publish the first resources.
 - Deferred (schema-ready): Phase 2 AI resource tools + analytics charts; Phase 3 thesis library, exam-prep bundles, memberships, course marketplace (see `docs/MARKETPLACE.md`).
+
+## 2026-06-17 — Marketplace Phase 2: AI authoring tools
+- Built an admin-only AI authoring assistant for marketplace resources (chosen as the next increment after Phase 1 was verified complete). Reuses the existing AI module — Groq provider (`lib/ai/groq.ts`), the career `structured<T>` pattern (generateObject → `generateText` markdown fallback), and `AiRequestLog` usage logging via `recordAssistantResult` — so **no new deps and no schema change**.
+- **Tools:** from the resource's own title + description, generate **excerpt**, **SEO** (metaTitle + metaDescription) and **tags** (applied to the form fields), plus **MCQs** and **flashcards** (previewed, then inserted into the description as Markdown). Human-approval-before-publish — nothing auto-saves.
+- **Files:** `lib/ai/resource-tools.ts` (Zod schemas + prompt builders), `services/ai/resource-tools.ts` (`generateExcerpt/generateSeo/suggestTags/generateMcqs/generateFlashcards` + shared `structured<T>`), `app/api/admin/resources/ai/route.ts` (admin-gated via `getCurrentUser` role check + per-IP rate-limit; checks AI `enabled`/`maintenanceMode` + `isGroqConfigured`), `components/admin/resource-ai-tools.tsx` (AI card wired into `resource-form.tsx`). New Zod `resourceAiSchema` in `lib/validation.ts`. Usage logged under features `RESOURCE_EXCERPT/SEO/TAGS/MCQ/FLASHCARD`.
+- Verified: `typecheck`, `lint`, `build` all green.
+
+### Follow-ups
+- Requires Admin → AI Settings **enabled** + `GROQ_API_KEY` set (same as the rest of the AI module).
+- Deferred: generate MCQs/flashcards directly from the **attached PDF** (fetch the authenticated Cloudinary asset → `extractText`); analytics charts; bookmarks UI polish.

@@ -7,8 +7,9 @@ AI features can be added without refactoring. Follows the repo layering: `app/` 
 
 **Built now:** AI Chat (streaming); **image + document understanding** (vision + OCR via a Groq Llama 4
 model; PDF/DOCX/TXT text extraction); the **Career Copilot** (`/copilot`: chat, resume analysis, job
-matching, interview prep, study help, learning recommendations); Admin AI Settings + usage analytics;
-safety guardrails; and 8 knowledge modes. **Designed/deferred:** RAG, AI Article Assistant, AI semantic
+matching, interview prep, study help, learning recommendations); an **admin AI authoring assistant for
+marketplace resources** (excerpt / SEO / tags / MCQs / flashcards); Admin AI Settings + usage analytics;
+safety guardrails; and 8 knowledge modes. **Designed/deferred:** RAG, AI Article Assistant (Post editor), AI semantic
 search, multilingual, voice/STT/TTS, camera medicine scanner, barcode scanner, drug-interaction checker.
 
 ## Stack & decisions
@@ -36,6 +37,7 @@ search, multilingual, voice/STT/TTS, camera medicine scanner, barcode scanner, d
 | Domain logic | `services/ai/{settings,chat,usage,conversations}.ts` |
 | API | `app/api/ai/chat/route.ts` (multimodal streaming), `app/api/ai/extract/route.ts` (doc text), `app/api/ai/conversations/route.ts` |
 | Career Copilot | `lib/ai/career.ts`, `services/ai/career.ts`, `app/api/ai/career/*`, `app/(public)/copilot`, `components/public/career-copilot.tsx` |
+| Resource authoring tools (admin) | `lib/ai/resource-tools.ts`, `services/ai/resource-tools.ts`, `app/api/admin/resources/ai/route.ts`, `components/admin/resource-ai-tools.tsx` (in `resource-form.tsx`) |
 | Admin UI | `app/admin/(panel)/ai/{page,actions}.tsx`, `components/admin/ai-settings-form.tsx` |
 | Public UI | `app/(public)/ai/page.tsx`, `components/public/{ai-chat,ai-chat-fab,ai-disclaimer}.tsx` |
 | DB | `prisma/schema.prisma` — `AiConversation`, `AiMessage`, `AiRequestLog`, `AiKnowledgeFile` + enums |
@@ -96,6 +98,9 @@ Unified dashboard — tabs **Chat · Resume · Job Match · Interview · Study �
 - **Job AI tools:** ✅ shipped in the Career Copilot (resume analysis, job matching, interview prep) — see the Career Copilot section above.
 - **AI Article Assistant (admin):** outline/SEO title/meta/tags/summary buttons in
   `components/admin/post-form.tsx` calling a new admin-only AI route (human approval before publish).
+  _The marketplace-resource variant of this is now **shipped** — see "Resource authoring tools" in the
+  code map (excerpt / SEO / tags / MCQs / flashcards). The `Post` editor version can reuse the same
+  `structured<T>` + admin-route pattern._
 - **AI semantic search:** embed posts; vector search alongside the existing Postgres FTS.
 - **Multilingual:** `language` param already plumbed (`en`/`hi`/`hinglish`); extend `buildSystemPrompt`.
 - **Future:** voice chat, STT/TTS, news summaries, job recommendations, learning assistant, quiz

@@ -66,9 +66,20 @@ never expose email/phone/IP/payment internals; rate-limit + honeypot on public P
 3. Admin → Resources → Settings: enable the store, set UPI id/QR (for the paid fallback). Razorpay
    reuses the donation keys; register the extra webhook URL `/api/razorpay/resource-webhook`.
 
+## Phase 2 — AI authoring tools (shipped 2026-06-17)
+Admin-only AI assist in the resource editor, reusing the AI module's Groq provider + `structured<T>`
+(generateObject → markdown fallback) + `AiRequestLog` usage logging. From the resource's own
+**title + description** (no extra upload), one click generates:
+- **excerpt**, **SEO** (metaTitle + metaDescription) and **tags** → applied straight to the form fields;
+- **MCQs** and **flashcards** → previewed, then inserted into the description as Markdown.
+Nothing auto-saves — the admin reviews/edits before publishing. Files: `lib/ai/resource-tools.ts`
+(schemas + prompts), `services/ai/resource-tools.ts` (domain), `app/api/admin/resources/ai/route.ts`
+(admin-gated; checks AI `enabled` + `GROQ_API_KEY` + light per-IP rate-limit), `components/admin/resource-ai-tools.tsx`
+(in `resource-form.tsx`). Gated on Admin → AI Settings being enabled with a configured key.
+
 ## Roadmap (deferred, schema-ready)
-- **Phase 2:** AI tools (summary, SEO title/description, tags, MCQs, flashcards from PDFs via
-  `extractText` + `generateObject`), richer analytics charts, bookmarks UI polish.
+- **Phase 2 (remaining):** generate MCQs/flashcards directly from the **attached PDF** (fetch the
+  authenticated Cloudinary asset → `extractText`), richer analytics charts, bookmarks UI polish.
 - **Phase 3:** Thesis & Research library (`/library` — abstract/citation/DOI fields already present),
   Exam-prep store (`/exam-prep`, bundles via the reserved `Order` tables), memberships/subscriptions
   (PREMIUM gating), course marketplace scaffolding (`Product.COURSE` + future `Lesson/Enrollment/Certificate`).

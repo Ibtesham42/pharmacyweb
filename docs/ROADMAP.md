@@ -1,6 +1,6 @@
 # Roadmap — Pharmacy Job Portal
 
-_Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · ◐ in progress · ☑ done
+_Last updated: 2026-06-17 (Marketplace Phase 1 + AI authoring tools)._ Status: ☐ todo · ◐ in progress · ☑ done
 
 ## MVP milestone
 
@@ -19,6 +19,7 @@ _Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · �
 | 11 Documentation | CLAUDE.md ×5, SRS/ARCHITECTURE/DATABASE/ROADMAP/PROGRESS/CHANGELOG. | ☑ |
 | 12 AI (Phase 2) | Groq chat (streaming) + **multimodal image/document understanding** + **Career Copilot** (resume analysis, job match, interview prep, study, learning recs) + Admin AI Settings + safety + usage analytics; RAG/article-assistant/semantic-search designed (`docs/AI.md`). | ◐ |
 | 13 Donations | Support platform: Razorpay + UPI/QR, donor form, printable receipts, admin donor management + analytics, CSV export (`docs/DONATIONS.md`). Recurring/memberships designed. | ◐ |
+| 14 Marketplace | Digital Resources Marketplace (`/store`): free/paid downloads, secure delivery, passwordless buyer accounts, Razorpay + UPI, moderated reviews, admin suite + analytics (`docs/MARKETPLACE.md`). **Phase 2:** admin **AI authoring tools** (excerpt/SEO/tags/MCQs/flashcards) shipped; thesis library / exam-prep / memberships designed. | ◐ |
 
 ### Remaining to go live (requires accounts/secrets)
 1. Provision Neon Postgres; set `DATABASE_URL` + `DIRECT_URL`.
@@ -31,5 +32,5 @@ _Last updated: 2026-06-15 (AI module Phase 2 foundation)._ Status: ☐ todo · �
 ## Future milestones (post-MVP, separate approvals)
 - Commerce: courses marketplace, paid-PDF store, checkout (Razorpay), orders/payments UI.
 - Newsletter + sponsorships; featured/sponsored job listings; affiliate.
-- AI modules: **shipped** — Groq chat, multimodal understanding, and the Career Copilot (resume/job-match/interview/study/learning); see `docs/AI.md`. Next: RAG knowledge base (pgvector), AI article assistant (admin), AI semantic search, multilingual, voice.
+- AI modules: **shipped** — Groq chat, multimodal understanding, the Career Copilot (resume/job-match/interview/study/learning), and the marketplace **resource authoring assistant** (excerpt/SEO/tags/MCQs/flashcards); see `docs/AI.md`. Next: RAG knowledge base (pgvector), AI article assistant (Post editor), AI semantic search, multilingual, voice.
 - Scaling: Redis cache, queue/worker, analytics rollups, read replicas.

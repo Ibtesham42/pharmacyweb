@@ -28,4 +28,4 @@ Living documentation. Keep these in sync — they are part of "definition of don
 - [ ] All CLAUDE.md "Last updated" lines bumped.
 
 ---
-_Last updated: 2026-06-16 — `DONATIONS.md` extended with the **Featured Supporters** system (migration `5_add_featured_supporters`); docs synced._
+_Last updated: 2026-06-17 — Marketplace Phase 1 verified + categories seeded; `MARKETPLACE.md` + `AI.md` document the **Phase 2 admin AI authoring tools** (excerpt/SEO/tags/MCQs/flashcards); docs synced._

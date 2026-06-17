@@ -30,4 +30,4 @@ Framework-agnostic domain logic. Maps to the spec's "backend" guide. This is whe
 - [ ] Soft-delete respected in reads (`deletedAt: null`).
 
 ---
-_Last updated: 2026-06-16 — `services/ai` (chat, career, etc.) + `services/donations` (donations, settings, stats, CSV); see `docs/AI.md`, `docs/DONATIONS.md`._
+_Last updated: 2026-06-17 — `services/ai` (chat, career, **resource-tools**, etc.) + `services/donations` (donations, settings, stats, CSV) + `services/{resources,resource-purchases,resource-reviews,resource-bookmarks,resource-categories,marketplace-settings,buyers}`; see `docs/AI.md`, `docs/DONATIONS.md`, `docs/MARKETPLACE.md`._
