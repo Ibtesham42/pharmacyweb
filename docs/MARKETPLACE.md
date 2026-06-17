@@ -112,6 +112,26 @@ download route works unchanged. Bundle price vs. un-bundled total drives a "save
 - **Admin:** Resources → **Bundles** tab — `app/admin/(panel)/resources/bundles/{page,new,[id],purchases}` +
   `actions.ts`; `components/admin/{bundle-form,bundle-row-actions,bundle-purchases-table}.tsx` (resource picker, cover, UPI verify).
 
-## Roadmap (deferred, schema-ready)
-- **Phase 3 (remaining):** memberships/subscriptions (PREMIUM gating — recurring Razorpay), course
-  marketplace scaffolding (`Product.COURSE` + future `Lesson/Enrollment/Certificate`).
+## Phase 3 — PREMIUM Memberships (shipped 2026-06-17)
+All-access PREMIUM via **fixed-term passes** (one-time payment, no auto-renew — chosen over recurring
+Razorpay Subscriptions to reuse the proven one-time flow and keep the UPI fallback). Migration
+`8_add_memberships` adds `MembershipPlan` (duration + price), `Membership` (buyer's window, `expiresAt`)
+and `MembershipPurchase` (mirrors `ResourcePurchase`).
+- **All-access entitlement:** `hasEntitlement` now returns true for ANY paid/premium resource while the
+  buyer has an active membership (checked before the per-resource/bundle lookups) — so the existing
+  secure download route, store detail, and bundle pages all respect membership with no extra wiring.
+  PREMIUM-tier resources become members-only (store detail shows a "Get PREMIUM" CTA).
+- **Grant on payment:** `markPaid` / `adminSet…` call `grantMembershipForPurchase` on a real PENDING→PAID
+  transition — upserts the `Membership`, extending from the current expiry if still active (else now).
+- **Services:** `services/memberships.ts` (plan CRUD, `hasActiveMembership`, `grantMembershipForPurchase`,
+  `activeMemberCount`), `services/membership-purchases.ts` (mirror + receipt email).
+- **Payments:** `app/api/membership/[planId]/purchase`, `/purchase/{verify,manual}`,
+  `app/api/razorpay/membership-webhook` (reuse purchase Zod schemas + the generalised `ResourcePurchaseForm`).
+- **Public:** `/membership` (plans + join via `components/public/membership-plans.tsx`), `/membership/receipt/[id]`;
+  My-Account status card. **Admin:** Resources → **Memberships** (`page` + `purchases`) + `actions.ts`,
+  `components/admin/{membership-plans-manager,membership-purchases-table}.tsx`. Nav + sitemap updated.
+
+## Roadmap (deferred — separate future milestone)
+- **Course marketplace:** `Product.COURSE` + future `Lesson/Enrollment/Certificate` (out of marketplace
+  Phases 1–3, which are now complete). Recurring/auto-renewing subscriptions also remain an option if
+  the fixed-term passes ever need to become true subscriptions.

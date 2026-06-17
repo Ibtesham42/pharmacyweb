@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, Receipt, ShoppingBag, Clock, Package } from "lucide-react";
+import { Download, Receipt, ShoppingBag, Clock, Package, Crown } from "lucide-react";
 import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { AccountLogoutButton } from "@/components/public/account-logout-button";
 import { SavedResources } from "@/components/public/saved-resources";
@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBuyer } from "@/lib/buyer-session";
 import { listBuyerPurchases } from "@/services/resource-purchases";
 import { listBuyerBundlePurchases } from "@/services/bundle-purchases";
+import { getMembershipByBuyer } from "@/services/memberships";
 import { listBuyerDownloads } from "@/services/resources";
 import { listBuyerBookmarks } from "@/services/resource-bookmarks";
 import { formatINR, formatDate } from "@/lib/format";
@@ -26,13 +27,15 @@ export const metadata = buildMetadata({
 
 export default async function AccountPage() {
   const buyer = await requireBuyer("/account");
-  const [purchases, bundlePurchases, downloads, bookmarks] = await Promise.all([
+  const [purchases, bundlePurchases, downloads, bookmarks, membership] = await Promise.all([
     safe(listBuyerPurchases(buyer.id, buyer.email), []),
     safe(listBuyerBundlePurchases(buyer.id, buyer.email), []),
     safe(listBuyerDownloads(buyer.id, buyer.email), []),
     safe(listBuyerBookmarks(buyer.id), []),
+    safe(getMembershipByBuyer(buyer.id), null),
   ]);
   const purchaseCount = purchases.length + bundlePurchases.length;
+  const isMember = Boolean(membership && membership.expiresAt > new Date());
 
   return (
     <div className="container max-w-4xl py-8">
@@ -44,6 +47,25 @@ export default async function AccountPage() {
         </div>
         <AccountLogoutButton />
       </div>
+
+      <Card className="mt-4">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <div className="flex items-center gap-2">
+            <Crown className={isMember ? "h-5 w-5 text-primary" : "h-5 w-5 text-muted-foreground"} />
+            <div>
+              <p className="text-sm font-medium">{isMember ? "PREMIUM member" : "Not a PREMIUM member"}</p>
+              <p className="text-xs text-muted-foreground">
+                {isMember && membership
+                  ? `All-access until ${formatDate(membership.expiresAt)}`
+                  : "Unlock every paid & premium resource with one pass."}
+              </p>
+            </div>
+          </div>
+          <Button asChild size="sm" variant={isMember ? "outline" : "default"}>
+            <Link href="/membership">{isMember ? "Extend" : "Go PREMIUM"}</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="purchases" className="mt-6">
         <TabsList>

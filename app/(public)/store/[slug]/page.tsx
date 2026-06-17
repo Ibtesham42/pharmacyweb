@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { Download, FileText, Star, Tag as TagIcon, Lock, Calendar } from "lucide-react";
+import { Download, FileText, Star, Tag as TagIcon, Lock, Calendar, Crown } from "lucide-react";
 import { ResourceAccess } from "@prisma/client";
 import { getResourceBySlug, hasEntitlement, hasDownloaded } from "@/services/resources";
 import { listApprovedReviews, getBuyerReview } from "@/services/resource-reviews";
@@ -210,17 +210,22 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                 )}
               </div>
 
-              {r.access === ResourceAccess.PREMIUM ? (
-                <div className="rounded-md border bg-muted/40 p-3 text-center text-sm text-muted-foreground">
-                  <Lock className="mx-auto mb-1 h-5 w-5" />
-                  Premium memberships are coming soon.
-                </div>
-              ) : entitled ? (
+              {entitled ? (
                 <Button asChild className="w-full">
                   <a href={`/api/resources/${r.slug}/download`}>
                     <Download className="h-4 w-4" /> Download
                   </a>
                 </Button>
+              ) : r.access === ResourceAccess.PREMIUM ? (
+                <div className="space-y-2 rounded-md border bg-accent/40 p-3 text-center text-sm">
+                  <Lock className="mx-auto h-5 w-5 text-primary" />
+                  <p className="text-muted-foreground">Members-only — included with PREMIUM.</p>
+                  <Button asChild className="w-full">
+                    <Link href="/membership">
+                      <Crown className="h-4 w-4" /> Get PREMIUM
+                    </Link>
+                  </Button>
+                </div>
               ) : (
                 <ResourcePurchaseForm
                   slug={r.slug}

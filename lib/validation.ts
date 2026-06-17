@@ -413,6 +413,18 @@ export const bundleSchema = z.object({
 });
 export type BundleInput = z.infer<typeof bundleSchema>;
 
+// ─────────────────────────── Memberships ───────────────────────────
+export const membershipPlanSchema = z.object({
+  name: z.string().min(2, "Name is too short").max(80),
+  description: optStr(300),
+  durationDays: z.coerce.number().int().min(1, "Duration must be at least 1 day").max(3650),
+  pricePaise: z.coerce.number().int().min(100, "Set a price of at least ₹1").max(5_000_000),
+  badge: optStr(40),
+  active: z.boolean().default(true),
+  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
+});
+export type MembershipPlanInput = z.infer<typeof membershipPlanSchema>;
+
 export const reviewSchema = z.object({
   resourceId: z.string().cuid(),
   rating: z.coerce.number().int().min(1).max(5),

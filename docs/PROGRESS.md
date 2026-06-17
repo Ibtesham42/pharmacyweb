@@ -185,3 +185,19 @@
 ### Follow-ups
 - Razorpay: register the `/api/razorpay/bundle-webhook` URL (reuses the donation keys/secret).
 - Phase 3 remaining: memberships/PREMIUM (recurring subscriptions), course scaffolding.
+
+## 2026-06-17 — Marketplace Phase 3: PREMIUM Memberships (final track)
+- Completed the last Phase-3 track — PREMIUM memberships. Locked two design decisions with the user: **fixed-term passes** (one-time payment, no auto-renew — reuses the proven one-time Razorpay+UPI flow, not recurring Razorpay Subscriptions) and **all-access** (an active membership unlocks every paid + premium resource).
+- **DB:** migration `8_add_memberships` (additive) — `MembershipPlan`, `Membership` (buyer window, `expiresAt`, unique buyerId), `MembershipPurchase` (mirrors `ResourcePurchase`). **Applied to Neon via `migrate deploy`** (verified queryable). Client regenerated.
+- **Entitlement:** `hasEntitlement` now returns true for ANY resource while the buyer has an active membership (checked before per-resource/bundle lookups) → store detail, secure download route and bundles all honour membership with no extra wiring. PREMIUM resources become members-only (store detail shows a "Get PREMIUM" CTA replacing the old "coming soon").
+- **Grant:** `grantMembershipForPurchase` runs on a real PENDING→PAID transition (verify/webhook/admin) — upserts `Membership`, extending from current expiry if still active, else from now.
+- **Services:** `services/memberships.ts` (plan CRUD, `hasActiveMembership`, grant, `activeMemberCount`), `services/membership-purchases.ts` (mirror + receipt email).
+- **Payments:** `app/api/membership/[planId]/purchase`, `/purchase/{verify,manual}`, `app/api/razorpay/membership-webhook` — reuse `purchaseCreate/Verify/Manual` schemas + the generalised `ResourcePurchaseForm` (planId in the path).
+- **Public:** `/membership` (plans + join, `membership-plans.tsx`), `/membership/receipt/[id]`; My-Account status card. `durationLabel` lives in `lib/marketplace/config.ts` (shared, not the client module). Nav (“PREMIUM”) + sitemap updated.
+- **Admin:** Resources → **Memberships** (plans manager + active-member count) + `/purchases` (UPI verify) + `actions.ts`; `membership-plans-manager`, `membership-purchases-table`.
+- Verified: `typecheck`, `lint`, `build` green (post-migration build: zero prisma errors; all `/membership` + admin + API routes compiled). **Marketplace Phases 1–3 complete.**
+
+### Follow-ups
+- Razorpay: register the `/api/razorpay/membership-webhook` URL (reuses the donation keys/secret).
+- Admin → Resources → Memberships: create at least one active plan to open `/membership`.
+- Future (separate milestone): course marketplace (`Product.COURSE` + `Lesson/Enrollment/Certificate`); optional true recurring subscriptions.

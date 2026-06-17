@@ -1,6 +1,7 @@
 import { Prisma, ResourceStatus, ResourceAccess, ResourceType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toSlug, uniqueSlug } from "@/lib/slug";
+import { hasActiveMembership } from "@/services/memberships";
 import type { ResourceInput } from "@/lib/validation";
 
 /** Resource types that make up the Thesis & Research library. */
@@ -362,6 +363,9 @@ export async function hasEntitlement(opts: {
   email?: string | null;
 }): Promise<boolean> {
   if (opts.access === ResourceAccess.FREE) return true;
+  // An active PREMIUM membership is all-access: it unlocks every PAID and PREMIUM resource.
+  if (await hasActiveMembership(opts.buyerId, opts.email)) return true;
+  // No membership → PREMIUM resources stay locked (members-only).
   if (opts.access === ResourceAccess.PREMIUM) return false;
   // Buyer-identity clauses shared by both purchase tables (id or email).
   const ors: { buyerId?: string; email?: string }[] = [];

@@ -69,6 +69,13 @@ export function avgRating(ratingSum: number, ratingCount: number): number {
   return Math.round((ratingSum / ratingCount) * 10) / 10;
 }
 
+/** Friendly membership-duration label, e.g. 30 -> "1 month", 365 -> "1 year". */
+export function durationLabel(days: number): string {
+  if (days % 365 === 0) return `${days / 365} year${days / 365 > 1 ? "s" : ""}`;
+  if (days % 30 === 0) return `${days / 30} month${days / 30 > 1 ? "s" : ""}`;
+  return `${days} day${days > 1 ? "s" : ""}`;
+}
+
 /** Human-readable file size, e.g. 1048576 -> "1.0 MB". */
 export function formatBytes(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return "";

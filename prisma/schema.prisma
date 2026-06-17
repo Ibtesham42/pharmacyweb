@@ -705,11 +705,13 @@ model Buyer {
   lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
 
-  purchases       ResourcePurchase[]
-  reviews         ResourceReview[]
-  bookmarks       ResourceBookmark[]
-  downloads       ResourceDownload[]
-  bundlePurchases BundlePurchase[]
+  purchases           ResourcePurchase[]
+  reviews             ResourceReview[]
+  bookmarks           ResourceBookmark[]
+  downloads           ResourceDownload[]
+  bundlePurchases     BundlePurchase[]
+  membership          Membership?
+  membershipPurchases MembershipPurchase[]
 }
 
 // Magic-link / OTP tokens. Only the hash is stored.
@@ -868,6 +870,72 @@ model BundlePurchase {
 
   @@index([buyerId])
   @@index([bundleId])
+  @@index([status])
+  @@index([email])
+  @@index([razorpayOrderId])
+}
+
+// ─────────────────────────── Memberships (PREMIUM, fixed-term passes) ───────────────────────────
+
+// A purchasable PREMIUM pass (fixed duration; one-time payment, no auto-renew).
+model MembershipPlan {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  durationDays Int
+  pricePaise  Int
+  badge       String? // optional label, e.g. "Most popular"
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchases MembershipPurchase[]
+  members   Membership[]
+
+  @@index([active, sortOrder])
+}
+
+// A buyer's current PREMIUM window (extended on renewal). Active when expiresAt > now.
+model Membership {
+  id        String   @id @default(cuid())
+  buyerId   String   @unique
+  planId    String?
+  startedAt DateTime @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  buyer Buyer           @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  plan  MembershipPlan? @relation(fields: [planId], references: [id])
+
+  @@index([expiresAt])
+}
+
+// Membership pass purchase (mirrors ResourcePurchase; reuses lib/razorpay.ts).
+model MembershipPurchase {
+  id                String         @id @default(cuid())
+  receiptNo         String         @unique
+  buyerId           String?
+  planId            String
+  email             String
+  name              String?
+  amountPaise       Int
+  currency          String         @default("INR")
+  method            DonationMethod
+  status            OrderStatus    @default(PENDING)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  transactionRef    String?
+  ip                String?
+  createdAt         DateTime       @default(now())
+  paidAt            DateTime?
+
+  buyer Buyer?         @relation(fields: [buyerId], references: [id])
+  plan  MembershipPlan @relation(fields: [planId], references: [id])
+
+  @@index([buyerId])
+  @@index([planId])
   @@index([status])
   @@index([email])
   @@index([razorpayOrderId])
