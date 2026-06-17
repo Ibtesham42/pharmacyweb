@@ -31,6 +31,12 @@ enum MembershipTier {
   VIP
 }
 
+enum NotificationType {
+  PURCHASE
+  MEMBERSHIP
+  SYSTEM
+}
+
 enum PostType {
   JOB
   NEWS
@@ -163,6 +169,9 @@ model User {
   auditLogs      AuditLog[]
   buyer          Buyer?
   passwordResets PasswordResetToken[]
+  postBookmarks  PostBookmark[]
+  notifications  Notification[]
+  aiConversations AiConversation[]
 }
 
 // Single-use password-reset tokens (hashed). Mirrors BuyerAuthToken.
@@ -208,6 +217,7 @@ model Post {
   tags          PostTag[]
   gallery       PostMedia[]
   events        AnalyticsEvent[]
+  bookmarks     PostBookmark[]
 
   @@index([type, status, publishedAt])
   @@index([status, publishedAt])
@@ -516,14 +526,17 @@ enum AiRequestStatus {
 model AiConversation {
   id        String   @id @default(cuid())
   clientId  String
+  userId    String? // linked to the unified account when signed in
   title     String?
   mode      AiMode   @default(GENERAL)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  user     User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   messages AiMessage[]
 
   @@index([clientId, updatedAt])
+  @@index([userId, updatedAt])
 }
 
 model AiMessage {
@@ -906,6 +919,39 @@ model BundlePurchase {
   @@index([status])
   @@index([email])
   @@index([razorpayOrderId])
+}
+
+// ─────────────────────────── Saved content & notifications (Phase 2) ───────────────────────────
+
+// A user's saved job/article/news post (Saved Jobs + Saved Articles in the dashboard).
+model PostBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+// In-app notification for a user (e.g. purchase confirmed, membership activated).
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 // ─────────────────────────── Memberships (PREMIUM, fixed-term passes) ───────────────────────────

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
 import { absoluteUrl } from "@/lib/site";
 import { formatINR } from "@/lib/format";
+import { notifyByEmail } from "@/services/notifications";
 
 function genReceiptNo(): string {
   const d = new Date();
@@ -113,6 +114,12 @@ export async function sendBundleReceiptEmail(purchaseId: string) {
       <p><a href="${bundleUrl}" style="display:inline-block;background:#0d9488;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Open your bundle</a></p>
       <p style="font-size:13px;color:#666">Or <a href="${receiptUrl}">view your receipt</a>. Sign in at <a href="${absoluteUrl("/account")}">your account</a> with this email to download anytime.</p>
     </div>`,
+  });
+  await notifyByEmail(p.email, {
+    type: "PURCHASE",
+    title: "Bundle purchase confirmed",
+    body: p.bundle.title,
+    href: `/exam-prep/receipt/${p.id}`,
   });
 }
 

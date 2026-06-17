@@ -9,6 +9,7 @@ import { Markdown } from "@/components/markdown";
 import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { ApplyButton } from "@/components/public/apply-button";
 import { ShareButtons } from "@/components/public/share-buttons";
+import { PostSaveButton } from "@/components/public/post-save-button";
 import { ViewBeacon } from "@/components/public/view-beacon";
 import { PostCard } from "@/components/public/post-card";
 import { AdSlot } from "@/components/ads/ad-slot";
@@ -113,8 +114,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
             </div>
           )}
 
-          <div className="mt-8 border-t pt-6">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t pt-6">
             <ShareButtons path={`/jobs/${post.slug}`} title={post.title} />
+            <PostSaveButton slug={post.slug} path={`/jobs/${post.slug}`} size="sm" />
           </div>
         </article>
 

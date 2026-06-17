@@ -216,3 +216,14 @@
 - Phase 2: Saved Jobs/Articles (`PostBookmark`), AI chats linked to accounts, Notifications.
 - Phase 3: Admin user management (suspend, grant/revoke Premium, activity) + membership tiers/benefits in the admin manager.
 - Email verification is scaffolded (`User.emailVerified`) — enforce later. Set `RESEND_API_KEY` for live reset/magic-link emails (dev logs them to the console).
+
+## 2026-06-18 — Auth Phase 2: saved content, linked AI chats, notifications
+- **DB:** migration `11_add_saved_and_notifications` (additive, applied to Neon) — `PostBookmark` (saved jobs/articles/news by `User`), `Notification` + `NotificationType` enum, and `AiConversation.userId` (+ index, FK).
+- **Saved jobs/articles:** `services/post-bookmarks.ts` (toggle/is/list); `app/api/posts/[slug]/bookmark` (GET state + POST toggle, auth-gated); `components/public/post-save-button.tsx` (self-fetches state so it's safe on the statically-rendered article/news pages) added next to the share buttons on the job page and in `ArticleDetail` (articles + news). Dashboard **Saved Jobs** / **Saved Articles** tabs.
+- **Linked AI chats:** `recordUserMessage` now stamps `userId` (threaded from the session in `app/api/ai/chat`); `listUserConversations` powers the dashboard **AI Chats** tab.
+- **Notifications:** `services/notifications.ts` (`notifyByEmail` resolves the User by email — no-op for guests); the resource/bundle/membership receipt functions create a PAID notification; dashboard **Notifications** tab (`components/public/notifications-panel.tsx`) + `POST /api/account/notifications/read` (mark-all-read).
+- Verified end-to-end (dev): signup→session; bookmark GET `{signedIn:true}` → POST `{bookmarked:true}`; authed `/account` 200 (all tabs render); guest POST bookmark → 401. `typecheck`/`lint`/`build` green; migration applied (single pending — no lexicographic-ordering issue). Temp test data cleaned up.
+
+### Follow-ups
+- Phase 3: admin user management (suspend, grant/revoke Premium, activity) + membership tiers/benefits in the admin manager.
+- Optional: header notification bell with unread count; deep-link AI Chats to reopen a specific conversation.

@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/mailer";
 import { absoluteUrl } from "@/lib/site";
 import { formatINR } from "@/lib/format";
 import { grantMembershipForPurchase } from "@/services/memberships";
+import { notifyByEmail } from "@/services/notifications";
 
 function genReceiptNo(): string {
   const d = new Date();
@@ -100,6 +101,12 @@ export async function sendMembershipReceiptEmail(purchaseId: string) {
       <p>Your membership is active — <a href="${accountUrl}" style="display:inline-block;background:#0d9488;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">go to your account</a> to download any resource.</p>
       <p style="font-size:13px;color:#666">Or <a href="${receiptUrl}">view your receipt</a>.</p>
     </div>`,
+  });
+  await notifyByEmail(p.email, {
+    type: "MEMBERSHIP",
+    title: "PREMIUM activated",
+    body: `${p.plan.name} — enjoy all-access downloads`,
+    href: "/account",
   });
 }
 

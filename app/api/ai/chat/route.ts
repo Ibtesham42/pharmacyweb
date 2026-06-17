@@ -11,6 +11,7 @@ import {
 } from "@/services/ai/chat";
 import { groq, isGroqConfigured } from "@/lib/ai/groq";
 import { buildSystemPrompt, detectEmergency, EMERGENCY_NOTICE } from "@/lib/ai/safety";
+import { getCurrentUser } from "@/lib/session";
 import { clientIp } from "@/lib/ratelimit";
 import type { AiModeKey } from "@/lib/ai/config";
 
@@ -73,7 +74,14 @@ export async function POST(req: NextRequest) {
   const model = hasImage ? settings.visionModel : settings.model;
 
   // Persist the user's message text (creates the conversation if needed).
-  const convoId = await recordUserMessage({ conversationId, clientId, mode, content: last.content });
+  const sessionUser = await getCurrentUser();
+  const convoId = await recordUserMessage({
+    conversationId,
+    clientId,
+    userId: sessionUser?.id ?? null,
+    mode,
+    content: last.content,
+  });
 
   // Safety: possible emergencies get a fixed safe notice — never the model.
   if (detectEmergency(last.content)) {

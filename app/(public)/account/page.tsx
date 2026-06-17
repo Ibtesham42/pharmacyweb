@@ -1,21 +1,26 @@
 import Link from "next/link";
-import { Download, Receipt, ShoppingBag, Clock, Package, Crown, Heart } from "lucide-react";
+import { Download, Receipt, ShoppingBag, Clock, Package, Crown, Heart, Briefcase, Newspaper, MessageSquare } from "lucide-react";
 import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { AccountLogoutButton } from "@/components/public/account-logout-button";
 import { SavedResources } from "@/components/public/saved-resources";
 import { ProfileForm } from "@/components/public/profile-form";
+import { NotificationsPanel } from "@/components/public/notifications-panel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { requireBuyer } from "@/lib/buyer-session";
+import { getCurrentUser } from "@/lib/session";
 import { listBuyerPurchases } from "@/services/resource-purchases";
 import { listBuyerBundlePurchases } from "@/services/bundle-purchases";
 import { getMembershipByBuyer } from "@/services/memberships";
 import { listBuyerDownloads } from "@/services/resources";
 import { listBuyerBookmarks } from "@/services/resource-bookmarks";
+import { listUserPostBookmarks } from "@/services/post-bookmarks";
+import { listUserConversations } from "@/services/ai/chat";
+import { listNotifications } from "@/services/notifications";
 import { listDonationsByEmail } from "@/services/donations";
-import { formatINR, formatDate } from "@/lib/format";
+import { formatINR, formatDate, postPath } from "@/lib/format";
 import { buildMetadata } from "@/lib/seo";
 import { safe } from "@/lib/utils";
 
@@ -30,16 +35,25 @@ export const metadata = buildMetadata({
 
 export default async function AccountPage() {
   const buyer = await requireBuyer("/account");
-  const [purchases, bundlePurchases, downloads, bookmarks, membership, donations] = await Promise.all([
-    safe(listBuyerPurchases(buyer.id, buyer.email), []),
-    safe(listBuyerBundlePurchases(buyer.id, buyer.email), []),
-    safe(listBuyerDownloads(buyer.id, buyer.email), []),
-    safe(listBuyerBookmarks(buyer.id), []),
-    safe(getMembershipByBuyer(buyer.id), null),
-    safe(listDonationsByEmail(buyer.email), []),
-  ]);
+  const user = await getCurrentUser();
+  const userId = user?.id ?? "";
+  const [purchases, bundlePurchases, downloads, bookmarks, membership, donations, savedPosts, conversations, notifications] =
+    await Promise.all([
+      safe(listBuyerPurchases(buyer.id, buyer.email), []),
+      safe(listBuyerBundlePurchases(buyer.id, buyer.email), []),
+      safe(listBuyerDownloads(buyer.id, buyer.email), []),
+      safe(listBuyerBookmarks(buyer.id), []),
+      safe(getMembershipByBuyer(buyer.id), null),
+      safe(listDonationsByEmail(buyer.email), []),
+      userId ? safe(listUserPostBookmarks(userId), []) : Promise.resolve([]),
+      userId ? safe(listUserConversations(userId), []) : Promise.resolve([]),
+      userId ? safe(listNotifications(userId), []) : Promise.resolve([]),
+    ]);
   const purchaseCount = purchases.length + bundlePurchases.length;
   const isMember = Boolean(membership && membership.expiresAt > new Date());
+  const savedJobs = savedPosts.filter((p) => p.type === "JOB");
+  const savedArticles = savedPosts.filter((p) => p.type !== "JOB");
+  const unreadNotifications = notifications.filter((n) => !n.readAt).length;
 
   return (
     <div className="container max-w-4xl py-8">
@@ -76,8 +90,14 @@ export default async function AccountPage() {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="purchases">Purchases{purchaseCount ? ` (${purchaseCount})` : ""}</TabsTrigger>
           <TabsTrigger value="saved">Saved{bookmarks.length ? ` (${bookmarks.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="jobs">Saved Jobs{savedJobs.length ? ` (${savedJobs.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="articles">Saved Articles{savedArticles.length ? ` (${savedArticles.length})` : ""}</TabsTrigger>
           <TabsTrigger value="downloads">Downloads{downloads.length ? ` (${downloads.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="chats">AI Chats{conversations.length ? ` (${conversations.length})` : ""}</TabsTrigger>
           <TabsTrigger value="donations">Donations{donations.length ? ` (${donations.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications{unreadNotifications ? ` (${unreadNotifications})` : ""}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -164,6 +184,42 @@ export default async function AccountPage() {
           )}
         </TabsContent>
 
+        <TabsContent value="jobs" className="space-y-2">
+          <SavedPostList items={savedJobs} icon={Briefcase} emptyText="No saved jobs yet." />
+        </TabsContent>
+
+        <TabsContent value="articles" className="space-y-2">
+          <SavedPostList items={savedArticles} icon={Newspaper} emptyText="No saved articles yet." />
+        </TabsContent>
+
+        <TabsContent value="chats" className="space-y-2">
+          {conversations.length === 0 ? (
+            <Empty icon={MessageSquare} text="No saved AI chats yet." />
+          ) : (
+            <Card>
+              <CardContent className="divide-y p-0">
+                {conversations.map((c) => (
+                  <Link
+                    key={c.id}
+                    href="/ai"
+                    className="flex items-center justify-between gap-3 p-3 text-sm hover:bg-accent/40"
+                  >
+                    <span className="flex items-center gap-2 truncate">
+                      <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {c.title || "Untitled chat"}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{formatDate(c.updatedAt)}</span>
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <NotificationsPanel initial={notifications} />
+        </TabsContent>
+
         <TabsContent value="donations" className="space-y-2">
           {donations.length === 0 ? (
             <Empty icon={Heart} text="No donations yet." />
@@ -191,6 +247,42 @@ export default async function AccountPage() {
           )}
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+type SavedPost = {
+  id: string;
+  title: string;
+  slug: string;
+  type: "JOB" | "NEWS" | "ARTICLE";
+  excerpt: string | null;
+  category: { name: string } | null;
+};
+
+function SavedPostList({
+  items,
+  icon: Icon,
+  emptyText,
+}: {
+  items: SavedPost[];
+  icon: React.ComponentType<{ className?: string }>;
+  emptyText: string;
+}) {
+  if (items.length === 0) return <Empty icon={Icon} text={emptyText} />;
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {items.map((p) => (
+        <Card key={p.id}>
+          <CardContent className="p-4">
+            <Link href={postPath(p.type, p.slug)} className="font-medium hover:underline">
+              {p.title}
+            </Link>
+            {p.category && <p className="mt-0.5 text-xs text-muted-foreground">{p.category.name}</p>}
+            {p.excerpt && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.excerpt}</p>}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

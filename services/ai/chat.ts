@@ -57,6 +57,7 @@ export async function checkUploadLimit(
 export async function recordUserMessage(params: {
   conversationId?: string;
   clientId: string;
+  userId?: string | null;
   mode: AiMode;
   content: string;
 }): Promise<string> {
@@ -70,11 +71,23 @@ export async function recordUserMessage(params: {
   }
   if (!conversationId) {
     const convo = await prisma.aiConversation.create({
-      data: { clientId: params.clientId, mode: params.mode, title: params.content.slice(0, 80) },
+      data: {
+        clientId: params.clientId,
+        userId: params.userId ?? null,
+        mode: params.mode,
+        title: params.content.slice(0, 80),
+      },
       select: { id: true },
     });
     conversationId = convo.id;
-  } else {
+  } else if (params.userId) {
+    // Backfill the account link on an existing (previously anonymous) conversation.
+    await prisma.aiConversation.updateMany({
+      where: { id: conversationId, userId: null },
+      data: { userId: params.userId },
+    });
+  }
+  if (conversationId && params.conversationId) {
     await prisma.aiConversation.update({
       where: { id: conversationId },
       data: { mode: params.mode },
@@ -84,6 +97,16 @@ export async function recordUserMessage(params: {
     data: { conversationId, role: AiRole.USER, content: params.content },
   });
   return conversationId;
+}
+
+/** A signed-in user's saved AI conversations (most recent first). */
+export function listUserConversations(userId: string, limit = 30) {
+  return prisma.aiConversation.findMany({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+    select: { id: true, title: true, mode: true, updatedAt: true },
+  });
 }
 
 /** Persist the assistant reply + write a usage log row. Best-effort (never throws). */

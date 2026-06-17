@@ -5,6 +5,7 @@ import type { PostDetail, PostCard as PostCardData } from "@/services/posts";
 import { Markdown } from "@/components/markdown";
 import { Breadcrumbs, type Crumb } from "@/components/public/breadcrumbs";
 import { ShareButtons } from "@/components/public/share-buttons";
+import { PostSaveButton } from "@/components/public/post-save-button";
 import { PostCard } from "@/components/public/post-card";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { Badge } from "@/components/ui/badge";
@@ -98,8 +99,9 @@ export function ArticleDetail({
           </div>
         )}
 
-        <div className="mt-8 border-t pt-6">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t pt-6">
           <ShareButtons path={path} title={post.title} />
+          <PostSaveButton slug={post.slug} path={path} size="sm" />
         </div>
       </article>
 
