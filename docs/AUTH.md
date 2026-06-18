@@ -69,6 +69,23 @@ forgot-password; protected downloads via session + entitlement + expiring signed
   (`updateMany … where status≠PAID`); receipt email, in-app notification and membership grant each fire exactly
   once across `/verify` + webhook + admin retries (no duplicate emails, notifications or membership extensions).
 
+## PREMIUM membership — admin approval workflow
+Payment **never** activates PREMIUM by itself. Flow: sign in → pay (Razorpay or UPI) → membership recorded as
+**Pending Verification** → admin reviews → **Approve** activates (sets the window) / **Reject** / **Suspend** /
+**Extend**. Migration `12_membership_approval` adds `MembershipStatus {PENDING APPROVED REJECTED SUSPENDED
+EXPIRED}`, `Membership.status` (+ nullable `expiresAt`, `purchaseId`, `reviewedAt/ById`), and
+`MembershipPurchase.membershipStatus`.
+- **Entitlement gate:** `hasActiveMembership` = `status=APPROVED && expiresAt>now` — so Pending/Rejected/
+  Suspended/Expired never unlock premium/all-access (everything downstream of `hasEntitlement` inherits this).
+- **Services (`services/memberships.ts`):** `requestMembershipForPurchase` (PENDING on first PAID transition, no
+  activation; a live renewal is left untouched), `approveMembershipPurchase`/`rejectMembershipPurchase`
+  (per-purchase), `suspendMembership`/`extendMembership` (per-buyer; reused by the `/admin/users` comp grant/revoke).
+- **Admin "Membership Verification"** (`/admin/resources/memberships/purchases`): user name/email/**User ID**/plan/
+  amount/**transaction id**/method/purchase date/payment + **verification** status, with Approve/Reject/Suspend/
+  Extend/Payment-details and a pending-count badge.
+- **Dashboard:** the `/account` membership card shows Plan · Status · Purchase Date · Approval Status · Expiry.
+- **Emails:** "payment received — pending verification" on pay; "PREMIUM activated" on approve.
+
 ## Migration note
 Prisma orders migrations **lexicographically**, so `"10_…"` sorts before `"9_…"`. `9_add_user_auth` therefore
 recreates the `Role` enum (adding `USER`) in a single transaction-safe step and sets the `USER` default itself;

@@ -4,6 +4,9 @@ All notable changes to this project are documented here (format: [Keep a Changel
 
 ## [Unreleased] — 2026-06-15 — UX & accessibility pass
 
+### Changed
+- **PREMIUM now requires admin approval before it activates.** Paying for a membership (card or UPI) no longer unlocks PREMIUM instantly — the payment is recorded as **Pending Verification**, an admin reviews it in a new **Membership Verification** console, and PREMIUM activates only once **Approved**. Members get a "payment received — pending verification" email, then a second "PREMIUM activated" email on approval. Renewals keep your current access live while the new payment awaits approval. Admins can **Approve / Reject / Suspend / Extend** memberships and see the buyer, plan, amount, transaction id, method and dates for each. Your dashboard shows the live status (Pending Admin Verification / Premium Active / Rejected / Suspended / Expired) with plan, purchase date and expiry.
+
 ### Security
 - **Purchases now require sign-in (server-enforced).** Buying a paid resource, an exam-prep bundle, or a PREMIUM membership now requires an authenticated account at the API level — the purchase is tied to the **signed-in account's** email, never an address typed into the form. Guests are asked to sign in first and returned to the page afterwards (the membership page now shows "Sign in to go PREMIUM" while still letting guests view the plans). Browsing, reading and exploring everything remains open to guests.
 

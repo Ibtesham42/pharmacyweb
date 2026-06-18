@@ -2,7 +2,7 @@
 // No secrets here. Razorpay keys live only in env (server-side).
 // Stored in SiteSetting key "marketplace" (JSON).
 
-import type { ResourceType, ResourceAccess } from "@prisma/client";
+import type { ResourceType, ResourceAccess, MembershipStatus } from "@prisma/client";
 
 export interface MarketplaceSettings {
   enabled: boolean;
@@ -61,6 +61,27 @@ export const ACCESS_LABELS: Record<ResourceAccess, string> = {
   FREE: "Free",
   PAID: "Paid",
   PREMIUM: "Premium (members)",
+};
+
+/** Admin/dashboard labels for the membership verification lifecycle. */
+export const MEMBERSHIP_STATUS_LABELS: Record<MembershipStatus, string> = {
+  PENDING: "Pending verification",
+  APPROVED: "Active",
+  REJECTED: "Rejected",
+  SUSPENDED: "Suspended",
+  EXPIRED: "Expired",
+};
+
+/** Badge colour for each membership status (maps to shadcn Badge variants). */
+export const MEMBERSHIP_STATUS_VARIANT: Record<
+  MembershipStatus,
+  "success" | "warning" | "secondary"
+> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "secondary",
+  SUSPENDED: "secondary",
+  EXPIRED: "secondary",
 };
 
 /** Average rating from the denormalized sum/count (1 decimal, 0 when none). */

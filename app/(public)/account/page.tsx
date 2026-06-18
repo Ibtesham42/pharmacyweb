@@ -50,7 +50,22 @@ export default async function AccountPage() {
       userId ? safe(listNotifications(userId), []) : Promise.resolve([]),
     ]);
   const purchaseCount = purchases.length + bundlePurchases.length;
-  const isMember = Boolean(membership && membership.expiresAt > new Date());
+  const now = new Date();
+  const isMember = Boolean(
+    membership && membership.status === "APPROVED" && membership.expiresAt && membership.expiresAt > now,
+  );
+  // Display label/colour for the dashboard membership card.
+  const membershipView: { label: string; variant: "success" | "warning" | "secondary" } | null = !membership
+    ? null
+    : isMember
+      ? { label: "Premium Active", variant: "success" }
+      : membership.status === "PENDING"
+        ? { label: "Pending Admin Verification", variant: "warning" }
+        : membership.status === "REJECTED"
+          ? { label: "Membership Rejected", variant: "secondary" }
+          : membership.status === "SUSPENDED"
+            ? { label: "Suspended", variant: "secondary" }
+            : { label: "Expired", variant: "secondary" };
   const savedJobs = savedPosts.filter((p) => p.type === "JOB");
   const savedArticles = savedPosts.filter((p) => p.type !== "JOB");
   const unreadNotifications = notifications.filter((n) => !n.readAt).length;
@@ -67,21 +82,52 @@ export default async function AccountPage() {
       </div>
 
       <Card className="mt-4">
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-          <div className="flex items-center gap-2">
-            <Crown className={isMember ? "h-5 w-5 text-primary" : "h-5 w-5 text-muted-foreground"} />
-            <div>
-              <p className="text-sm font-medium">{isMember ? "PREMIUM member" : "Not a PREMIUM member"}</p>
-              <p className="text-xs text-muted-foreground">
-                {isMember && membership
-                  ? `All-access until ${formatDate(membership.expiresAt)}`
-                  : "Unlock every paid & premium resource with one pass."}
-              </p>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Crown className={isMember ? "h-5 w-5 text-primary" : "h-5 w-5 text-muted-foreground"} />
+              <div>
+                <p className="text-sm font-medium">Membership</p>
+                {membershipView ? (
+                  <Badge variant={membershipView.variant} className="mt-0.5">
+                    {membershipView.label}
+                  </Badge>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Unlock every paid & premium resource with one pass.</p>
+                )}
+              </div>
             </div>
+            <Button asChild size="sm" variant={isMember ? "outline" : "default"}>
+              <Link href="/membership">{isMember ? "Extend" : "Go PREMIUM"}</Link>
+            </Button>
           </div>
-          <Button asChild size="sm" variant={isMember ? "outline" : "default"}>
-            <Link href="/membership">{isMember ? "Extend" : "Go PREMIUM"}</Link>
-          </Button>
+
+          {membership && (
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t pt-3 text-sm sm:grid-cols-4">
+              <div>
+                <dt className="text-xs text-muted-foreground">Current plan</dt>
+                <dd className="font-medium">{membership.plan?.name ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Approval status</dt>
+                <dd className="font-medium">{membershipView?.label ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Purchase date</dt>
+                <dd className="font-medium">{formatDate(membership.createdAt)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Expiry date</dt>
+                <dd className="font-medium">{membership.expiresAt ? formatDate(membership.expiresAt) : "—"}</dd>
+              </div>
+            </dl>
+          )}
+
+          {membership?.status === "PENDING" && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Your payment was received. PREMIUM activates once an admin verifies it — you’ll be notified.
+            </p>
+          )}
         </CardContent>
       </Card>
 

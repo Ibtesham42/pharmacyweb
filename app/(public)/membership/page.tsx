@@ -45,7 +45,9 @@ export default async function MembershipPage() {
   }
 
   const membership = buyer ? await safe(getMembershipByBuyer(buyer.id), null) : null;
-  const isMember = Boolean(membership && membership.expiresAt > new Date());
+  const isMember = Boolean(
+    membership && membership.status === "APPROVED" && membership.expiresAt && membership.expiresAt > new Date(),
+  );
 
   return (
     <div className="container max-w-5xl py-8">

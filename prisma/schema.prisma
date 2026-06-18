@@ -31,6 +31,16 @@ enum MembershipTier {
   VIP
 }
 
+// Lifecycle of a membership grant. Payment lands as PENDING (awaiting admin
+// review); only APPROVED (and unexpired/unsuspended) unlocks premium content.
+enum MembershipStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+  EXPIRED
+}
+
 enum NotificationType {
   PURCHASE
   MEMBERSHIP
@@ -977,20 +987,27 @@ model MembershipPlan {
   @@index([active, sortOrder])
 }
 
-// A buyer's current PREMIUM window (extended on renewal). Active when expiresAt > now.
+// A buyer's PREMIUM entitlement record (one per buyer). Active ONLY when
+// status = APPROVED and expiresAt > now. Created PENDING on payment; an admin
+// approves to set the window. Suspended/Rejected/Expired never unlock content.
 model Membership {
-  id        String   @id @default(cuid())
-  buyerId   String   @unique
-  planId    String?
-  startedAt DateTime @default(now())
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String           @id @default(cuid())
+  buyerId      String           @unique
+  planId       String?
+  status       MembershipStatus @default(PENDING)
+  startedAt    DateTime         @default(now())
+  expiresAt    DateTime? // set only on approval
+  purchaseId   String? // originating MembershipPurchase (for "view payment details")
+  reviewedAt   DateTime?
+  reviewedById String? // admin User id who approved/rejected/suspended
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   buyer Buyer           @relation(fields: [buyerId], references: [id], onDelete: Cascade)
   plan  MembershipPlan? @relation(fields: [planId], references: [id])
 
   @@index([expiresAt])
+  @@index([status])
 }
 
 // Membership pass purchase (mirrors ResourcePurchase; reuses lib/razorpay.ts).
@@ -1004,7 +1021,8 @@ model MembershipPurchase {
   amountPaise       Int
   currency          String         @default("INR")
   method            DonationMethod
-  status            OrderStatus    @default(PENDING)
+  status            OrderStatus    @default(PENDING) // payment state (money received)
+  membershipStatus  MembershipStatus @default(PENDING) // admin verification state
   razorpayOrderId   String?
   razorpayPaymentId String?
   transactionRef    String?
@@ -1018,6 +1036,7 @@ model MembershipPurchase {
   @@index([buyerId])
   @@index([planId])
   @@index([status])
+  @@index([membershipStatus])
   @@index([email])
   @@index([razorpayOrderId])
 }

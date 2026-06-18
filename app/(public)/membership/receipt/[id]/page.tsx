@@ -24,24 +24,32 @@ export default async function MembershipReceiptPage({ params }: { params: Promis
   if (!p) notFound();
 
   const paid = p.status === "PAID";
+  const approved = p.membershipStatus === "APPROVED";
   const txn = p.razorpayPaymentId || p.transactionRef || "—";
+  const statusValue = approved
+    ? "Active (approved)"
+    : paid
+      ? "Paid — pending verification"
+      : "Pending verification";
 
   return (
     <div className="container max-w-xl py-10">
       <div className="rounded-2xl border p-6 sm:p-8">
         <div className="text-center">
-          {paid ? (
+          {approved ? (
             <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
           ) : (
             <Clock className="mx-auto h-12 w-12 text-muted-foreground" />
           )}
           <h1 className="mt-3 text-2xl font-bold">
-            {paid ? "Welcome to PREMIUM" : "Payment received — pending verification"}
+            {approved ? "Welcome to PREMIUM" : "Payment received — pending verification"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {paid
+            {approved
               ? "Your membership is active. Download any resource from your account."
-              : "Your UPI payment is awaiting admin verification. PREMIUM activates once confirmed."}
+              : paid
+                ? "Your payment is confirmed and awaiting admin verification. PREMIUM activates once an admin approves it — we’ll notify you."
+                : "Your UPI payment is awaiting admin verification. PREMIUM activates once confirmed and approved."}
           </p>
         </div>
 
@@ -56,19 +64,18 @@ export default async function MembershipReceiptPage({ params }: { params: Promis
             <Row label="Amount" value={formatINR(p.amountPaise)} />
             <Row label="Transaction ID" value={txn} />
             <Row label="Method" value={p.method === "RAZORPAY" ? "Razorpay" : "UPI"} />
-            <Row label="Status" value={paid ? "Paid" : "Pending verification"} />
+            <Row label="Payment" value={paid ? "Paid" : "Pending"} />
+            <Row label="Membership" value={statusValue} />
             <Row label="Date" value={formatDate(p.paidAt ?? p.createdAt)} />
           </dl>
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-2 print:hidden">
-          {paid && (
-            <Button asChild>
-              <Link href="/account">
-                <Crown className="h-4 w-4" /> My account
-              </Link>
-            </Button>
-          )}
+          <Button asChild>
+            <Link href="/account">
+              <Crown className="h-4 w-4" /> My account
+            </Link>
+          </Button>
           <ReceiptActions />
           <Button asChild variant="ghost">
             <Link href="/store">Browse resources</Link>

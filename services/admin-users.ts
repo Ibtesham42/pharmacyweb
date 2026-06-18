@@ -62,5 +62,5 @@ export async function setUserStatus(id: string, status: UserStatus) {
 }
 
 export async function activeMemberCountTotal(): Promise<number> {
-  return prisma.membership.count({ where: { expiresAt: { gt: new Date() } } });
+  return prisma.membership.count({ where: { status: "APPROVED", expiresAt: { gt: new Date() } } });
 }

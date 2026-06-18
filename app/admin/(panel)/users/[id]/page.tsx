@@ -17,7 +17,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   if (!detail) notFound();
 
   const { user, stats, membership, recentDownloads } = detail;
-  const isMember = Boolean(membership && membership.expiresAt > new Date());
+  const isMember = Boolean(
+    membership && membership.status === "APPROVED" && membership.expiresAt && membership.expiresAt > new Date(),
+  );
 
   return (
     <div className="space-y-4">
@@ -56,9 +58,11 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 <Row
                   label="PREMIUM"
                   value={
-                    isMember && membership
-                      ? `Active until ${formatDate(membership.expiresAt)}${membership.plan ? ` (${membership.plan.name})` : ""}`
-                      : "None"
+                    !membership
+                      ? "None"
+                      : isMember
+                        ? `Active until ${formatDate(membership.expiresAt)}${membership.plan ? ` (${membership.plan.name})` : ""}`
+                        : `${membership.status}${membership.plan ? ` (${membership.plan.name})` : ""}`
                   }
                 />
               </dl>
