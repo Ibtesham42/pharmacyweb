@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { OrderStatus } from "@prisma/client";
 import { verifyWebhookSignature } from "@/lib/razorpay";
 import {
   getBundlePurchaseByRazorpayOrderId,
@@ -39,8 +38,8 @@ export async function POST(req: NextRequest) {
     const orderId = payment?.order_id ?? event.payload?.order?.entity?.id;
     if (orderId) {
       const purchase = await getBundlePurchaseByRazorpayOrderId(orderId);
-      if (purchase && purchase.status !== OrderStatus.PAID) {
-        await markPaid(purchase.id, payment?.id);
+      // Atomic markPaid returns true only on the first transition → one receipt.
+      if (purchase && (await markPaid(purchase.id, payment?.id))) {
         void sendBundleReceiptEmail(purchase.id);
       }
     }

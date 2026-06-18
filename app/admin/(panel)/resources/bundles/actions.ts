@@ -73,8 +73,8 @@ export async function deleteBundleAction(id: string): Promise<Result> {
 export async function setBundlePurchaseStatusAction(id: string, status: OrderStatus): Promise<Result> {
   try {
     const user = await requireAdmin();
-    await adminSetBundlePurchaseStatus(id, status);
-    if (status === OrderStatus.PAID) void sendBundleReceiptEmail(id);
+    // Email the receipt only on the FIRST transition to PAID.
+    if (await adminSetBundlePurchaseStatus(id, status)) void sendBundleReceiptEmail(id);
     await writeAudit({ actorId: user.id, action: "UPDATE", entityType: "BundlePurchase", entityId: id, after: { status } });
     revalidatePath("/admin/resources/bundles/purchases");
     return { ok: true };

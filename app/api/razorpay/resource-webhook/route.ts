@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { OrderStatus } from "@prisma/client";
 import { verifyWebhookSignature } from "@/lib/razorpay";
 import {
   getPurchaseByRazorpayOrderId,
@@ -39,9 +38,9 @@ export async function POST(req: NextRequest) {
     const orderId = payment?.order_id ?? event.payload?.order?.entity?.id;
     if (orderId) {
       const purchase = await getPurchaseByRazorpayOrderId(orderId);
-      // Only act once; the /verify route usually marks PAID first (instant unlock).
-      if (purchase && purchase.status !== OrderStatus.PAID) {
-        await markPaid(purchase.id, payment?.id);
+      // The atomic markPaid returns true only on the first transition, so the
+      // receipt is sent once even if /verify already unlocked this purchase.
+      if (purchase && (await markPaid(purchase.id, payment?.id))) {
         void sendResourceReceiptEmail(purchase.id);
       }
     }

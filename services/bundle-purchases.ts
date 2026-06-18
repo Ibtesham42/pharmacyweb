@@ -40,19 +40,25 @@ export async function attachRazorpayOrder(id: string, orderId: string) {
   await prisma.bundlePurchase.update({ where: { id }, data: { razorpayOrderId: orderId } });
 }
 
-/** Idempotent: only moves a non-PAID purchase to PAID. */
-export async function markPaid(id: string, razorpayPaymentId?: string) {
-  await prisma.bundlePurchase.updateMany({
+/**
+ * Idempotent transition to PAID. Returns `true` only on the FIRST transition,
+ * so callers fire side-effects (receipt email, notification) exactly once.
+ */
+export async function markPaid(id: string, razorpayPaymentId?: string): Promise<boolean> {
+  const res = await prisma.bundlePurchase.updateMany({
     where: { id, status: { not: OrderStatus.PAID } },
     data: { status: OrderStatus.PAID, paidAt: new Date(), ...(razorpayPaymentId ? { razorpayPaymentId } : {}) },
   });
+  return res.count > 0;
 }
 
-export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: string) {
-  await prisma.bundlePurchase.updateMany({
+/** As `markPaid`, keyed by Razorpay order id. Returns true only on first transition. */
+export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: string): Promise<boolean> {
+  const res = await prisma.bundlePurchase.updateMany({
     where: { razorpayOrderId: orderId, status: { not: OrderStatus.PAID } },
     data: { status: OrderStatus.PAID, paidAt: new Date(), ...(razorpayPaymentId ? { razorpayPaymentId } : {}) },
   });
+  return res.count > 0;
 }
 
 export async function submitManualRef(id: string, transactionRef: string) {
@@ -123,11 +129,20 @@ export async function sendBundleReceiptEmail(purchaseId: string) {
   });
 }
 
-export async function adminSetBundlePurchaseStatus(id: string, status: OrderStatus) {
-  return prisma.bundlePurchase.update({
-    where: { id },
-    data: { status, ...(status === OrderStatus.PAID ? { paidAt: new Date() } : {}) },
-  });
+/**
+ * Admin status change. Returns `true` only when this call newly transitions the
+ * purchase to PAID (so the receipt email/notification fires exactly once).
+ */
+export async function adminSetBundlePurchaseStatus(id: string, status: OrderStatus): Promise<boolean> {
+  if (status === OrderStatus.PAID) {
+    const res = await prisma.bundlePurchase.updateMany({
+      where: { id, status: { not: OrderStatus.PAID } },
+      data: { status: OrderStatus.PAID, paidAt: new Date() },
+    });
+    return res.count > 0;
+  }
+  await prisma.bundlePurchase.update({ where: { id }, data: { status } });
+  return false;
 }
 
 export async function listBundlePurchases(opts: { status?: OrderStatus; q?: string; page?: number }) {

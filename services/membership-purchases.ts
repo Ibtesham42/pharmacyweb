@@ -41,13 +41,19 @@ export async function attachRazorpayOrder(id: string, orderId: string) {
   await prisma.membershipPurchase.update({ where: { id }, data: { razorpayOrderId: orderId } });
 }
 
-/** Idempotent: only moves a non-PAID purchase to PAID, and grants membership on a real transition. */
-export async function markPaid(id: string, razorpayPaymentId?: string) {
+/**
+ * Idempotent transition to PAID. Grants/extends the membership and returns `true`
+ * ONLY on the first transition (status was not already PAID), so the grant,
+ * receipt email and notification each happen exactly once across verify +
+ * webhook + retries.
+ */
+export async function markPaid(id: string, razorpayPaymentId?: string): Promise<boolean> {
   const res = await prisma.membershipPurchase.updateMany({
     where: { id, status: { not: OrderStatus.PAID } },
     data: { status: OrderStatus.PAID, paidAt: new Date(), ...(razorpayPaymentId ? { razorpayPaymentId } : {}) },
   });
   if (res.count > 0) await grantMembershipForPurchase(id);
+  return res.count > 0;
 }
 
 export function getMembershipPurchaseById(id: string) {
@@ -110,13 +116,25 @@ export async function sendMembershipReceiptEmail(purchaseId: string) {
   });
 }
 
-export async function adminSetMembershipPurchaseStatus(id: string, status: OrderStatus) {
-  const updated = await prisma.membershipPurchase.update({
-    where: { id },
-    data: { status, ...(status === OrderStatus.PAID ? { paidAt: new Date() } : {}) },
-  });
-  if (status === OrderStatus.PAID) await grantMembershipForPurchase(id);
-  return updated;
+/**
+ * Admin status change. Grants the membership and returns `true` only when this
+ * call newly transitions the purchase to PAID — so a repeat click (or an
+ * already-PAID row) never re-grants/extends the membership or re-sends mail.
+ */
+export async function adminSetMembershipPurchaseStatus(id: string, status: OrderStatus): Promise<boolean> {
+  if (status === OrderStatus.PAID) {
+    const res = await prisma.membershipPurchase.updateMany({
+      where: { id, status: { not: OrderStatus.PAID } },
+      data: { status: OrderStatus.PAID, paidAt: new Date() },
+    });
+    if (res.count > 0) {
+      await grantMembershipForPurchase(id);
+      return true;
+    }
+    return false;
+  }
+  await prisma.membershipPurchase.update({ where: { id }, data: { status } });
+  return false;
 }
 
 export async function listMembershipPurchases(opts: { status?: OrderStatus; q?: string; page?: number }) {

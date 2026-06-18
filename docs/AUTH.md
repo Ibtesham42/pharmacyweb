@@ -61,6 +61,13 @@ Tabs: **Profile** (edit name + change password; email is read-only to protect th
 JWT sessions + bcrypt; SUSPENDED + null-hash rejected at `authorize`; rate-limit + honeypot on
 signup/forgot/reset/request-link; hashed single-use `PasswordResetToken` (1h); no account enumeration on
 forgot-password; protected downloads via session + entitlement + expiring signed URLs.
+- **Purchases require auth (server-side).** `/api/{membership/[planId],resources/[slug],bundles/[slug]}/purchase`
+  call `getCurrentBuyer()` → `401` for guests, and key the purchase on the **session** buyer id/email (never a
+  body-supplied email) — so a purchase/membership is always assigned to the authenticated account. The
+  membership page gates guests with a "Sign in to go PREMIUM" link (plans stay viewable).
+- **Idempotent payments.** `markPaid`/`adminSet*Status` return `true` only on the first PAID transition
+  (`updateMany … where status≠PAID`); receipt email, in-app notification and membership grant each fire exactly
+  once across `/verify` + webhook + admin retries (no duplicate emails, notifications or membership extensions).
 
 ## Migration note
 Prisma orders migrations **lexicographically**, so `"10_…"` sorts before `"9_…"`. `9_add_user_auth` therefore

@@ -59,8 +59,8 @@ export async function deletePlanAction(id: string): Promise<Result> {
 export async function setMembershipPurchaseStatusAction(id: string, status: OrderStatus): Promise<Result> {
   try {
     const user = await requireAdmin();
-    await adminSetMembershipPurchaseStatus(id, status);
-    if (status === OrderStatus.PAID) void sendMembershipReceiptEmail(id);
+    // Grant + email only on the FIRST transition to PAID (no re-grant on repeat clicks).
+    if (await adminSetMembershipPurchaseStatus(id, status)) void sendMembershipReceiptEmail(id);
     await writeAudit({ actorId: user.id, action: "UPDATE", entityType: "MembershipPurchase", entityId: id, after: { status } });
     revalidatePath("/admin/resources/memberships/purchases");
     return { ok: true };

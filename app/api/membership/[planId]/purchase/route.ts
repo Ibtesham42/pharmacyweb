@@ -5,7 +5,7 @@ import { purchaseCreateSchema } from "@/lib/validation";
 import { getMarketplaceSettings } from "@/services/marketplace-settings";
 import { getPlanById } from "@/services/memberships";
 import { createMembershipPurchase, attachRazorpayOrder } from "@/services/membership-purchases";
-import { ensureBuyer } from "@/services/buyers";
+import { getCurrentBuyer } from "@/lib/buyer-session";
 import { isRazorpayConfigured, razorpayKeyId, createRazorpayOrder } from "@/lib/razorpay";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 
@@ -25,6 +25,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pla
   const d = parsed.data;
   if (d.website) return NextResponse.json({ ok: true }); // honeypot
 
+  // PREMIUM requires an account — tie the purchase to the signed-in buyer so the
+  // membership is assigned to THIS account (never trust an email from the body).
+  const buyer = await getCurrentBuyer();
+  if (!buyer) {
+    return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+  }
+
   const settings = await getMarketplaceSettings();
   if (!settings.enabled) {
     return NextResponse.json({ error: "The store is currently unavailable." }, { status: 503 });
@@ -43,9 +50,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pla
     return NextResponse.json({ error: "UPI is not available right now." }, { status: 503 });
   }
 
-  const buyer = await ensureBuyer(d.email, d.name);
+  const buyerName = buyer.name || d.name;
   const purchase = await createMembershipPurchase(
-    { planId: plan.id, email: d.email, name: d.name, amountPaise: plan.pricePaise, method: d.method, buyerId: buyer.id },
+    { planId: plan.id, email: buyer.email, name: buyerName, amountPaise: plan.pricePaise, method: d.method, buyerId: buyer.id },
     ip,
   );
 
@@ -60,8 +67,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pla
           orderId: order.id,
           keyId: razorpayKeyId(),
           amountPaise: plan.pricePaise,
-          name: d.name,
-          email: d.email,
+          name: buyerName,
+          email: buyer.email,
           resourceTitle: `PREMIUM — ${plan.name}`,
         },
       });

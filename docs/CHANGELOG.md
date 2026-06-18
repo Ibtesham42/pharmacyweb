@@ -4,6 +4,13 @@ All notable changes to this project are documented here (format: [Keep a Changel
 
 ## [Unreleased] — 2026-06-15 — UX & accessibility pass
 
+### Security
+- **Purchases now require sign-in (server-enforced).** Buying a paid resource, an exam-prep bundle, or a PREMIUM membership now requires an authenticated account at the API level — the purchase is tied to the **signed-in account's** email, never an address typed into the form. Guests are asked to sign in first and returned to the page afterwards (the membership page now shows "Sign in to go PREMIUM" while still letting guests view the plans). Browsing, reading and exploring everything remains open to guests.
+
+### Fixed
+- **No more duplicate purchase emails/notifications.** A paid order confirmed by both the instant `/verify` and Razorpay's webhook (or an admin re-clicking "verify") previously could send the receipt email + in-app notification twice. Receipts and notifications now fire exactly once, on the first time an order becomes PAID.
+- **Membership grants are now exactly-once.** Repeated payment callbacks or a repeated admin "mark paid" no longer re-grant or accidentally **extend** a PREMIUM membership — the membership window is set a single time per payment. All payment flows (resources, bundles, memberships, donations) are fully idempotent against retries, refreshes, duplicate requests and delayed webhooks.
+
 ### Added
 - **Unified authentication & accounts (Phase 1):** one platform-wide sign-in built on Auth.js — **Sign up**, **Sign in**, **Forgot/Reset password**, **profile + change password**, and passwordless **email-link/OTP** — at `/login`, `/signup`, `/forgot-password`, `/reset-password`. The previous separate admin login and buyer magic-link were **consolidated into one system** (legacy `/admin/login` and `/account/login` now redirect to `/login`); a header account menu shows Sign in / My account / Sign out. **Roles:** Guest (browse only), Registered user (downloads, saves, purchases, profile), and Admin/Editor; **Premium/VIP** derive from an active membership (architecture ready). The marketplace `Buyer` is bridged to the unified `User` by email, so all existing purchases/downloads/memberships keep working unchanged.
 - **Protected downloads:** no resource file can be downloaded without signing in — free *and* paid. Guests clicking Download/Buy get a professional modal ("Please sign in or create an account…") with Sign in / Create account, returning to the resource after login. Paid resources still require purchase; premium resources require an active membership.

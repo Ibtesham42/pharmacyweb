@@ -41,9 +41,13 @@ export async function attachRazorpayOrder(id: string, orderId: string) {
   await prisma.resourcePurchase.update({ where: { id }, data: { razorpayOrderId: orderId } });
 }
 
-/** Idempotent: only moves a non-PAID purchase to PAID. */
-export async function markPaid(id: string, razorpayPaymentId?: string) {
-  await prisma.resourcePurchase.updateMany({
+/**
+ * Idempotent transition to PAID. Returns `true` only on the FIRST transition
+ * (status was not already PAID), so callers fire side-effects (receipt email,
+ * notification) exactly once even across verify + webhook + retries.
+ */
+export async function markPaid(id: string, razorpayPaymentId?: string): Promise<boolean> {
+  const res = await prisma.resourcePurchase.updateMany({
     where: { id, status: { not: OrderStatus.PAID } },
     data: {
       status: OrderStatus.PAID,
@@ -51,10 +55,12 @@ export async function markPaid(id: string, razorpayPaymentId?: string) {
       ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
     },
   });
+  return res.count > 0;
 }
 
-export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: string) {
-  await prisma.resourcePurchase.updateMany({
+/** As `markPaid`, keyed by Razorpay order id. Returns true only on first transition. */
+export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: string): Promise<boolean> {
+  const res = await prisma.resourcePurchase.updateMany({
     where: { razorpayOrderId: orderId, status: { not: OrderStatus.PAID } },
     data: {
       status: OrderStatus.PAID,
@@ -62,6 +68,7 @@ export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: str
       ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
     },
   });
+  return res.count > 0;
 }
 
 export async function submitManualRef(id: string, transactionRef: string) {
@@ -135,11 +142,21 @@ export async function sendResourceReceiptEmail(purchaseId: string) {
   });
 }
 
-export async function adminSetPurchaseStatus(id: string, status: OrderStatus) {
-  return prisma.resourcePurchase.update({
-    where: { id },
-    data: { status, ...(status === OrderStatus.PAID ? { paidAt: new Date() } : {}) },
-  });
+/**
+ * Admin status change. Returns `true` only when this call newly transitions the
+ * purchase to PAID (so the receipt email/notification fires exactly once — a
+ * second admin click, or an already-PAID row, returns false).
+ */
+export async function adminSetPurchaseStatus(id: string, status: OrderStatus): Promise<boolean> {
+  if (status === OrderStatus.PAID) {
+    const res = await prisma.resourcePurchase.updateMany({
+      where: { id, status: { not: OrderStatus.PAID } },
+      data: { status: OrderStatus.PAID, paidAt: new Date() },
+    });
+    return res.count > 0;
+  }
+  await prisma.resourcePurchase.update({ where: { id }, data: { status } });
+  return false;
 }
 
 export async function listPurchases(opts: { status?: OrderStatus; q?: string; page?: number }) {

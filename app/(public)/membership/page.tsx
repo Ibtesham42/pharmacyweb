@@ -75,6 +75,7 @@ export default async function MembershipPage() {
         upiAvailable={settings.upiFallbackEnabled && Boolean(settings.upiId)}
         defaultName={buyer?.name ?? ""}
         defaultEmail={buyer?.email ?? ""}
+        authed={Boolean(buyer)}
         isMember={isMember}
         memberUntil={membership ? formatDate(membership.expiresAt) : undefined}
       />

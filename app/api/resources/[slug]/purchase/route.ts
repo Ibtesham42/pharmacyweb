@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { purchaseCreateSchema } from "@/lib/validation";
 import { getMarketplaceSettings } from "@/services/marketplace-settings";
 import { createPurchase, attachRazorpayOrder } from "@/services/resource-purchases";
-import { ensureBuyer } from "@/services/buyers";
+import { getCurrentBuyer } from "@/lib/buyer-session";
 import { isRazorpayConfigured, razorpayKeyId, createRazorpayOrder } from "@/lib/razorpay";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 
@@ -24,6 +24,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   }
   const d = parsed.data;
   if (d.website) return NextResponse.json({ ok: true }); // honeypot
+
+  // Buying requires an account — tie the purchase to the signed-in buyer
+  // (never trust an email from the request body).
+  const buyer = await getCurrentBuyer();
+  if (!buyer) {
+    return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+  }
 
   const settings = await getMarketplaceSettings();
   if (!settings.enabled) {
@@ -55,12 +62,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "UPI is not available right now." }, { status: 503 });
   }
 
-  const buyer = await ensureBuyer(d.email, d.name);
+  const buyerName = buyer.name || d.name;
   const purchase = await createPurchase(
     {
       resourceId: resource.id,
-      email: d.email,
-      name: d.name,
+      email: buyer.email,
+      name: buyerName,
       amountPaise: resource.pricePaise,
       method: d.method,
       buyerId: buyer.id,
@@ -79,8 +86,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
           orderId: order.id,
           keyId: razorpayKeyId(),
           amountPaise: resource.pricePaise,
-          name: d.name,
-          email: d.email,
+          name: buyerName,
+          email: buyer.email,
           resourceTitle: resource.title,
         },
       });

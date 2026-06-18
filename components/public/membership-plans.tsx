@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Crown, Check } from "lucide-react";
+import Link from "next/link";
+import { Crown, Check, LogIn } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ export function MembershipPlans({
   upiAvailable,
   defaultName,
   defaultEmail,
+  authed,
   isMember,
   memberUntil,
 }: {
@@ -40,6 +42,7 @@ export function MembershipPlans({
   upiAvailable: boolean;
   defaultName: string;
   defaultEmail: string;
+  authed: boolean;
   isMember: boolean;
   memberUntil?: string;
 }) {
@@ -82,13 +85,22 @@ export function MembershipPlans({
                   ))}
                 </ul>
               )}
-              <Button
-                className="mt-auto"
-                variant={selected?.id === p.id ? "secondary" : "default"}
-                onClick={() => setSelected(selected?.id === p.id ? null : p)}
-              >
-                <Crown className="h-4 w-4" /> {selected?.id === p.id ? "Selected" : isMember ? "Extend with this plan" : "Get PREMIUM"}
-              </Button>
+              {authed ? (
+                <Button
+                  className="mt-auto"
+                  variant={selected?.id === p.id ? "secondary" : "default"}
+                  onClick={() => setSelected(selected?.id === p.id ? null : p)}
+                >
+                  <Crown className="h-4 w-4" /> {selected?.id === p.id ? "Selected" : isMember ? "Extend with this plan" : "Get PREMIUM"}
+                </Button>
+              ) : (
+                // Guests can view plans but must sign in to purchase — return here afterwards.
+                <Button asChild className="mt-auto">
+                  <Link href="/login?next=/membership">
+                    <LogIn className="h-4 w-4" /> Sign in to go PREMIUM
+                  </Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -23,8 +23,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
   }
 
-  await markPaid(purchase.id, razorpayPaymentId); // grants/extends the membership
-  void sendMembershipReceiptEmail(purchase.id);
+  // Grant + email/notify only on the FIRST PAID transition (verify + webhook are idempotent).
+  if (await markPaid(purchase.id, razorpayPaymentId)) {
+    void sendMembershipReceiptEmail(purchase.id);
+  }
 
   return NextResponse.json({ receiptUrl: `/membership/receipt/${purchase.id}` });
 }

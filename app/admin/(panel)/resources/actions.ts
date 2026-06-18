@@ -132,9 +132,9 @@ export async function deleteResourceCategoryAction(id: string): Promise<Result> 
 export async function setPurchaseStatusAction(id: string, status: OrderStatus): Promise<Result> {
   try {
     const user = await requireAdmin();
-    await adminSetPurchaseStatus(id, status);
-    // Marking a manual (UPI) purchase paid unlocks it → email the receipt.
-    if (status === OrderStatus.PAID) void sendResourceReceiptEmail(id);
+    // Email the receipt only on the FIRST transition to PAID (a repeat click,
+    // or a row already paid by the webhook, must not re-send).
+    if (await adminSetPurchaseStatus(id, status)) void sendResourceReceiptEmail(id);
     await writeAudit({ actorId: user.id, action: "UPDATE", entityType: "ResourcePurchase", entityId: id, after: { status } });
     revalidatePath("/admin/resources/purchases");
     return { ok: true };

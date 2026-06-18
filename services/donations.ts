@@ -71,9 +71,13 @@ export async function attachRazorpayOrder(id: string, orderId: string) {
   await prisma.donation.update({ where: { id }, data: { razorpayOrderId: orderId } });
 }
 
-/** Idempotent: only moves a non-PAID donation to PAID. */
-export async function markPaid(id: string, razorpayPaymentId?: string) {
-  await prisma.donation.updateMany({
+/**
+ * Idempotent transition to PAID. Returns `true` only on the first transition.
+ * (Donations have no receipt email/notification/grant, so they are already
+ * duplication-free; the boolean keeps the payment contract uniform across flows.)
+ */
+export async function markPaid(id: string, razorpayPaymentId?: string): Promise<boolean> {
+  const res = await prisma.donation.updateMany({
     where: { id, status: { not: DonationStatus.PAID } },
     data: {
       status: DonationStatus.PAID,
@@ -81,10 +85,12 @@ export async function markPaid(id: string, razorpayPaymentId?: string) {
       ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
     },
   });
+  return res.count > 0;
 }
 
-export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: string) {
-  await prisma.donation.updateMany({
+/** As `markPaid`, keyed by Razorpay order id. Returns true only on first transition. */
+export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: string): Promise<boolean> {
+  const res = await prisma.donation.updateMany({
     where: { razorpayOrderId: orderId, status: { not: DonationStatus.PAID } },
     data: {
       status: DonationStatus.PAID,
@@ -92,6 +98,7 @@ export async function markPaidByOrderId(orderId: string, razorpayPaymentId?: str
       ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
     },
   });
+  return res.count > 0;
 }
 
 export async function submitManualRef(id: string, transactionRef: string) {
