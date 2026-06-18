@@ -90,6 +90,14 @@ Code-only (uses `User.status` + `Membership` + `MembershipPlan.tier/benefits` fr
 - **Membership tiers/benefits:** `MembershipPlan.tier` (FREE/PREMIUM/VIP) + `benefits[]` are now editable in
   `components/admin/membership-plans-manager.tsx` and shown on the `/membership` plan cards.
 
+## Phase 3 follow-up — header notification bell (shipped)
+A **bell** in the public header (signed-in users only) with a live unread badge and a dropdown of the latest
+notifications. Self-fetching client `components/public/notification-bell.tsx` reads `GET
+/api/account/notifications` (`getCurrentUser`-gated → `{ unread, items }` via `listNotifications` +
+`unreadNotificationCount`) on mount and on open; **Mark all read** reuses `POST
+/api/account/notifications/read`; **View all** links to `/account`. A matching **Notifications** link sits in the
+mobile menu. No migration / new deps.
+
 ## Roadmap
-- Email verification is scaffolded (`User.emailVerified`) and can be enforced later. A header notification bell
-  (unread count) and deep-linking the AI Chats list to reopen a conversation are possible follow-ups.
+- Email verification is scaffolded (`User.emailVerified`) and can be enforced later. Deep-linking the AI Chats
+  list (and the bell's "View all") to select a specific account tab via URL is a possible follow-up.

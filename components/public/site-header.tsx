@@ -4,12 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Menu, X, Search, Pill, ChevronDown, Heart, UserRound, LogOut } from "lucide-react";
+import { Menu, X, Search, Pill, ChevronDown, Heart, UserRound, LogOut, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/public/search-bar";
 import { ThemeToggle } from "@/components/public/theme-toggle";
+import { NotificationBell } from "@/components/public/notification-bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,6 +113,11 @@ export function SiteHeader({
                 <span className="hidden sm:inline">Donate</span>
               </Link>
             </Button>
+          )}
+          {authed && (
+            <div className="hidden md:block">
+              <NotificationBell />
+            </div>
           )}
           <div className="hidden md:block">
             <ThemeToggle />
@@ -231,6 +237,13 @@ export function SiteHeader({
                     className="flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium hover:bg-accent"
                   >
                     <UserRound className="h-4 w-4" /> My account
+                  </Link>
+                  <Link
+                    href="/account"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium hover:bg-accent"
+                  >
+                    <Bell className="h-4 w-4" /> Notifications
                   </Link>
                   {isAdmin && (
                     <Link

@@ -39,7 +39,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "This resource is free — just download it." }, { status: 400 });
   }
   if (resource.access === ResourceAccess.PREMIUM) {
-    return NextResponse.json({ error: "Premium memberships are coming soon." }, { status: 503 });
+    return NextResponse.json(
+      { error: "This is a PREMIUM resource — get an all-access membership to download it." },
+      { status: 403 },
+    );
   }
   if (resource.pricePaise < 100) {
     return NextResponse.json({ error: "This resource is not available for purchase." }, { status: 400 });

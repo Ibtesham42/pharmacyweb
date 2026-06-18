@@ -1,6 +1,6 @@
 # Roadmap — Pharmacy Job Portal
 
-_Last updated: 2026-06-18 (Unified Authentication & Resource Access Control — Phase 1)._ Status: ☐ todo · ◐ in progress · ☑ done
+_Last updated: 2026-06-18 (Unified Authentication & Resource Access Control — Phases 1–3 + header notification bell follow-up)._ Status: ☐ todo · ◐ in progress · ☑ done
 
 ## MVP milestone
 

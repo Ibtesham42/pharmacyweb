@@ -237,3 +237,14 @@
 
 ### Follow-ups
 - Optional: header notification bell (unread count); deep-link AI Chats to reopen a conversation; enforce email verification (`User.emailVerified`).
+
+## 2026-06-18 — Auth Phase 3 follow-up: header notification bell
+- Resumed from the committed Auth-epic state (working tree clean, typecheck green, all phases committed). Picked the first listed Phase-3 follow-up — the **header notification bell** — as the next self-contained increment; it builds entirely on existing Phase-2 infrastructure (no migration, no new deps).
+- **API:** new `GET /api/account/notifications` (`force-dynamic`, `getCurrentUser`-gated, 401 for guests) → `{ unread, items }` (latest 8) via the existing `listNotifications` + `unreadNotificationCount`. The mark-all-read route (`POST .../notifications/read`) was reused unchanged.
+- **UI:** new client `components/public/notification-bell.tsx` — self-fetches on mount and on dropdown-open (safe in the statically-rendered public layout, mirrors `post-save-button`'s self-fetch pattern), shows an unread **badge** (caps at "9+"), a dropdown of recent notifications (linked items navigate; unread row highlighted), optimistic **Mark all read**, and a **View all** → `/account` footer. Wired into `site-header.tsx`: bell in the desktop right cluster when `authed`; a **Notifications** link added to the mobile menu's account section.
+- **Cleanup (stale code found during inspection):** `app/api/resources/[slug]/purchase` returned *"Premium memberships are coming soon."* (503) for PREMIUM resources even though memberships now ship. Corrected to a 403 *"This is a PREMIUM resource — get an all-access membership to download it."* (the store UI already routes PREMIUM resources to "Get PREMIUM" → `/membership`; this is the defensive backend guard). The vestigial `marketplace.premiumComingSoon` setting is now unused by any rendering path — left in place (harmless; removing it spans validation/seed/admin and isn't worth a migration-ledger churn unprompted).
+- **Verified:** `typecheck` + `lint` clean; `npm run build` exits 0 with the new `ƒ /api/account/notifications` route listed and **zero** prisma errors. Dev-server smoke test: guest `GET` and `POST` on the notifications endpoints both return **401**.
+
+### Follow-ups
+- Remaining optional Auth follow-ups: deep-link AI Chats (and this bell's "View all") to reopen/select a specific account tab via URL; enforce email verification (`User.emailVerified`, deferred — login-blocking + needs live mailer).
+- Optional: have receipt/notification creation revalidate or push so the bell badge updates without a navigation (currently refreshes on mount + dropdown-open).
