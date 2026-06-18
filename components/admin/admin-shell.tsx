@@ -96,7 +96,7 @@ export function AdminShell({
             <ExternalLink className="h-4 w-4" /> View site
           </Link>
           <button
-            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
           >
             <LogOut className="h-4 w-4" /> Sign out
@@ -118,7 +118,7 @@ export function AdminShell({
             {navList}
             <div className="mt-auto border-t p-3">
               <button
-                onClick={() => signOut({ callbackUrl: "/admin/login" })}
+                onClick={() => signOut({ callbackUrl: "/login" })}
                 className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
               >
                 <LogOut className="h-4 w-4" /> Sign out
