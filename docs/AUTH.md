@@ -85,6 +85,7 @@ EXPIRED}`, `Membership.status` (+ nullable `expiresAt`, `purchaseId`, `reviewedA
   Extend/Payment-details and a pending-count badge.
 - **Dashboard:** the `/account` membership card shows Plan · Status · Purchase Date · Approval Status · Expiry.
 - **Emails:** "payment received — pending verification" on pay; "PREMIUM activated" on approve.
+- **Expiry sweep:** `expireStaleMemberships()` flips APPROVED-but-past-expiry rows to `EXPIRED` (guarded `updateMany`). Run by a daily Vercel Cron (`/api/cron/expire-memberships`, `Bearer CRON_SECRET`-gated; `503` when the secret is unset, never open) and lazily on the admin memberships page. Access was already cut at expiry (entitlement checks `expiresAt>now`); the sweep only corrects the stored/displayed status.
 
 ## Migration note
 Prisma orders migrations **lexicographically**, so `"10_…"` sorts before `"9_…"`. `9_add_user_auth` therefore
@@ -125,3 +126,5 @@ mobile menu. No migration / new deps.
 ## Roadmap
 - Email verification is scaffolded (`User.emailVerified`) and can be enforced later. Deep-linking the AI Chats
   list (and the bell's "View all") to select a specific account tab via URL is a possible follow-up.
+- ~~Membership expiry sweep (APPROVED-but-past-expiry → EXPIRED)~~ — **shipped** (daily Vercel Cron +
+  lazy admin-page check); see the approval-workflow section above.

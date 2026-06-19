@@ -280,5 +280,16 @@ Replaced auto-activation with an admin **approval gate**. Confirmed two product 
 - **Verified:** `typecheck` + `lint` clean; `npm run build` exit 0 (0 prisma errors); `npm run test` 17/17. A temporary live-DB integration test (created, run, **removed**, DB cleaned — 0 leftover) proved the full **download matrix**: PAID-but-pending PREMIUM → blocked + FREE allowed; approve → allowed; suspend → blocked; extend → allowed; reject → blocked; expired → blocked; renewal keeps access live then extends on approval. Dev-server smoke: public pages 200; guest `/account` + `/admin/resources/memberships(/purchases)` → 307; guest membership purchase → 401; membership page shows "Sign in to go PREMIUM"; receipt page shows "pending verification".
 
 ### Follow-ups
-- A cron/lazy job could flip APPROVED-but-past-expiry rows to `EXPIRED` for tidier reporting (entitlement already treats them as inactive, so not required).
+- A cron/lazy job could flip APPROVED-but-past-expiry rows to `EXPIRED` for tidier reporting (entitlement already treats them as inactive, so not required). — **done 2026-06-20 (below).**
 - Email verification enforcement + the account-tab deep-links remain the open optional items.
+
+## 2026-06-20 — Membership expiry sweep (APPROVED → EXPIRED)
+- Resumed from the committed PREMIUM-approval state (working tree clean, all 13 migrations applied, typecheck/lint/build/tests green). Inspected the repo: no partial/uncommitted work; the `EXPIRED` `MembershipStatus` was **half-wired** (enum value + `MEMBERSHIP_STATUS_LABELS`/`_VARIANT` + the admin `VALID` list all referenced it) but **nothing ever set it**. Closed that gap — the #1 follow-up of the prior commit. **Code-only, no migration, no new deps.**
+- **Service:** `expireStaleMemberships()` in `services/memberships.ts` — a guarded `updateMany` (`status=APPROVED AND expiresAt<=now → EXPIRED`). Idempotent (no-op when nothing has lapsed) and access-neutral: entitlement (`isActive`/`hasActiveMembership`) already gates on `expiresAt>now`, and an EXPIRED row is `isActive=false`, so renewals/comp-grants still recompute the window from `now`.
+- **Cron:** new `app/api/cron/expire-memberships/route.ts` (`GET`, `force-dynamic`) gated by `Authorization: Bearer <CRON_SECRET>` (Vercel attaches this automatically); returns `503` when `CRON_SECRET` is unset (never an open mutation) and `401` on mismatch. Wired in `vercel.json` `crons` (daily `0 0 * * *`). New `CRON_SECRET` documented in `.env.example`.
+- **Lazy fallback:** the admin memberships landing page (`/admin/resources/memberships`, admin-only + `force-dynamic`) calls `safe(expireStaleMemberships(), 0)` on load, so reporting is accurate even before the cron secret is configured.
+- **Verified:** `typecheck` + `lint` clean; `npm run build` exit 0 (33 pages; new `ƒ /api/cron/expire-memberships` route listed; zero prisma errors). Live dev-server smoke test against the real Neon DB: no-auth → **401**, wrong bearer → **401**, correct bearer → **200 `{"ok":true,"expired":0}`** — the sweep ran and correctly left the one active (unexpired) member untouched (no false expiry). Dev server stopped after the test.
+
+### Follow-ups
+- Email verification enforcement (`User.emailVerified`, login-blocking + needs live mailer) and account-tab deep-links remain the open optional items.
+- Vercel Cron requires `CRON_SECRET` set in the project env to run the unattended daily sweep; the lazy admin-page check covers the gap until then.

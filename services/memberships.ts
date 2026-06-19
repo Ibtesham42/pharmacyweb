@@ -89,6 +89,22 @@ export async function activeMemberCount(): Promise<number> {
   return prisma.membership.count({ where: { status: MembershipStatus.APPROVED, expiresAt: { gt: new Date() } } });
 }
 
+/**
+ * Flip APPROVED memberships whose window has already passed to EXPIRED (tidy reporting).
+ * Entitlement (`isActive`/`hasActiveMembership`) already treats them as inactive — it checks
+ * `expiresAt > now` — so this only corrects the stored status; it never changes who has access.
+ * Idempotent: the WHERE guard (`status=APPROVED AND expiresAt<=now`) makes repeat runs no-ops,
+ * and an EXPIRED row is `isActive=false`, so renewals/comp-grants still recompute from `now`.
+ * Returns the number of rows updated. Safe to call lazily (admin page load) or from a cron.
+ */
+export async function expireStaleMemberships(): Promise<number> {
+  const res = await prisma.membership.updateMany({
+    where: { status: MembershipStatus.APPROVED, expiresAt: { lte: new Date() } },
+    data: { status: MembershipStatus.EXPIRED },
+  });
+  return res.count;
+}
+
 async function resolveBuyerId(p: { buyerId: string | null; email: string }): Promise<string> {
   if (p.buyerId) return p.buyerId;
   const buyer = await prisma.buyer.upsert({

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Receipt, Crown, ShieldCheck } from "lucide-react";
-import { listAllPlans, activeMemberCount } from "@/services/memberships";
+import { listAllPlans, activeMemberCount, expireStaleMemberships } from "@/services/memberships";
 import { pendingVerificationCount } from "@/services/membership-purchases";
 import { pendingReviewCount } from "@/services/resource-reviews";
 import { ResourceAdminTabs } from "@/components/admin/resource-admin-tabs";
@@ -13,6 +13,10 @@ import { safe } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMembershipsPage() {
+  // Lazy housekeeping: flip any lapsed APPROVED memberships to EXPIRED so the counts/
+  // statuses below read true even when the daily cron sweep isn't configured. No-op when
+  // nothing has lapsed (guarded updateMany); entitlement already ignores expired windows.
+  await safe(expireStaleMemberships(), 0);
   const [plans, members, pending, pendingVerify] = await Promise.all([
     safe(listAllPlans(), []),
     safe(activeMemberCount(), 0),
